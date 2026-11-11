@@ -34,4 +34,25 @@
 
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+// @import '@ionic/angular/css/palettes/dark.system.css';
+
+/* ---------- Estilos compartidos de Kompa ---------- */
+
+// Botones redondeados como los MaterialButton de la app nativa (cornerRadius 28dp)
+ion-button.kompa-boton {
+  --border-radius: 28px;
+  height: 56px;
+  font-size: 16px;
+  font-weight: bold;
+  text-transform: none;
+}
+
+// Barra superior morada
+ion-toolbar.kompa-toolbar {
+  --background: var(--ion-color-primary);
+  --color: #ffffff;
+}
+
+.kompa-texto-gris {
+  color: var(--kompa-gray-text);
+}

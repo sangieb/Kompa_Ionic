@@ -1,2 +1,33 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+// Colores de Kompa (tomados de res/values/colors.xml de la app nativa)
+:root {
+  --ion-color-primary: #7b2cbf;
+  --ion-color-primary-rgb: 123, 44, 191;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #6c27a8;
+  --ion-color-primary-tint: #8841c5;
+
+  --ion-color-secondary: #9d4edd;
+  --ion-color-secondary-rgb: 157, 78, 221;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #8a45c2;
+  --ion-color-secondary-tint: #a760e0;
+
+  --ion-color-tertiary: #4a0e7a;
+  --ion-color-tertiary-rgb: 74, 14, 122;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #410c6b;
+  --ion-color-tertiary-tint: #5c2687;
+
+  --ion-background-color: #ffffff;
+  --ion-text-color: #2b2b2b;
+
+  // Colores propios de Kompa para usar en los estilos de cada pantalla
+  --kompa-purple-light: #e0aaff;
+  --kompa-purple-ultra-light: #f5ebff;
+  --kompa-gray-text: #6b6b6b;
+  --kompa-marker-local: #7b2cbf;
+  --kompa-marker-api: #2f80ed;
+}
