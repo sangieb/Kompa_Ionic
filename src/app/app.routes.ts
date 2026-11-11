@@ -34,4 +34,8 @@ export const routes: Routes = [
     path: 'confirmacion',
     loadComponent: () => import('./pages/confirmacion/confirmacion.page').then((m) => m.ConfirmacionPage),
   },
+  {
+    path: 'lista',
+    loadComponent: () => import('./pages/lista/lista.page').then((m) => m.ListaPage),
+  },
 ];
