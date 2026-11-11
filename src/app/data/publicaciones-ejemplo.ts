@@ -1,6 +1,6 @@
-import { Publicacion } from '../models/publicacion.model';
+// Publicaciones que se siembran la primera vez que se abre el feed.
+import type { Publicacion } from '../features/feed/models/publicacion.model';
 
-/** Publicaciones iniciales del feed (como ActividadesEjemplo, pero para el feed) */
 export const PUBLICACIONES_EJEMPLO: Publicacion[] = [
   {
     id: 'pub_ejemplo_monserrate',

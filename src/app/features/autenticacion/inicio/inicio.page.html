@@ -1,0 +1,12 @@
+<ion-content class="inicio" [fullscreen]="true">
+  <div class="contenedor">
+    <img class="logo" src="assets/kompa-logo.svg" alt="Logo de Kompa" />
+
+    <div class="botones">
+      <ion-button expand="block" class="kompa-boton boton-crear" (click)="irA('/registro')"> Crear cuenta </ion-button>
+      <ion-button expand="block" fill="outline" class="kompa-boton boton-login" (click)="irA('/login')">
+        Iniciar sesión
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

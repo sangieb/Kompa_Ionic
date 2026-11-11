@@ -1,0 +1,25 @@
+.contenido {
+  padding: 32px 24px 40px;
+}
+
+.titulo {
+  margin: 0;
+  color: var(--ion-color-tertiary);
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.subtitulo {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.boton-confirmar {
+  margin-top: 32px;
+}
+
+.boton-editar {
+  margin-top: 8px;
+  --color: var(--kompa-gray-text);
+  text-transform: none;
+}

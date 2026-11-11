@@ -1,0 +1,110 @@
+.titulo {
+  color: var(--ion-color-tertiary);
+  font-weight: bold;
+}
+
+ion-searchbar {
+  padding: 0 8px;
+  --border-radius: 24px;
+}
+
+/* ---- Chips de filtros (selección única) ---- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 8px;
+}
+
+ion-chip {
+  margin: 0 8px 8px 0;
+  border: 1px solid var(--ion-color-secondary);
+  --background: var(--kompa-purple-ultra-light);
+  --color: #2b2b2b;
+}
+
+ion-chip.seleccionado {
+  --background: var(--ion-color-primary);
+  --color: #ffffff;
+}
+
+/* ---- Lista vacía ---- */
+.vacio {
+  margin-top: 40%;
+  text-align: center;
+  font-size: 15px;
+}
+
+/* ---- Tarjetas (item_actividad.xml) ---- */
+.lista {
+  padding-bottom: 24px;
+}
+
+.tarjeta {
+  display: flex;
+  align-items: center;
+  margin: 8px 16px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.foto {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--kompa-purple-ultra-light);
+  color: var(--ion-color-primary);
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.datos {
+  flex: 1;
+  min-width: 0; // permite cortar el texto con "…"
+  margin-left: 12px;
+
+  p {
+    margin: 2px 0 0;
+  }
+}
+
+.nombre {
+  margin: 0;
+  color: #2b2b2b;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.nombre,
+.secundario {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.secundario {
+  color: var(--kompa-gray-text);
+  font-size: 12px;
+}
+
+.pie {
+  display: flex;
+  gap: 8px;
+}
+
+.duracion {
+  color: var(--ion-color-primary);
+  font-size: 12px;
+  font-weight: bold;
+}

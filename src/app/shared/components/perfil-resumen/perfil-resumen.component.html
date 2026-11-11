@@ -1,0 +1,31 @@
+<div class="foto">
+  @if (perfil.fotoUri) {
+    <img [src]="perfil.fotoUri" alt="Foto de perfil" />
+  } @else {
+    <ion-icon name="camera"></ion-icon>
+  }
+</div>
+
+<h2 class="nombre">{{ perfil.nombre }}</h2>
+<p class="correo kompa-texto-gris">{{ perfil.correo }}</p>
+
+<div class="tarjeta">
+  <p>Nacimiento: {{ nacimiento }}</p>
+  <p>Nacionalidad: {{ perfil.nacionalidad }}</p>
+  <p>Género: {{ perfil.genero }}</p>
+  <p>Conectar con: {{ conectar }}</p>
+</div>
+
+<h3 class="etiqueta">Idiomas</h3>
+<div class="chips">
+  @for (idioma of perfil.idiomas; track idioma) {
+    <ion-chip>{{ idioma }}</ion-chip>
+  }
+</div>
+
+<h3 class="etiqueta">Intereses</h3>
+<div class="chips">
+  @for (interes of perfil.intereses; track interes) {
+    <ion-chip>{{ interes }}</ion-chip>
+  }
+</div>

@@ -1,0 +1,30 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="toolbar-blanca">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title class="titulo">Mi perfil</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (cargando()) {
+  <div class="centro">
+    <ion-spinner color="primary"></ion-spinner>
+  </div>
+  } @else if (perfil(); as p) {
+  <div class="contenido">
+    <h1 class="titulo">Tu perfil</h1>
+    <p class="subtitulo kompa-texto-gris">Así te ven los demás viajeros</p>
+
+    <app-perfil-resumen [perfil]="p" />
+
+    <ion-button expand="block" class="kompa-boton boton-salir" (click)="cerrarSesion()"> Cerrar sesión </ion-button>
+  </div>
+  } @else {
+  <div class="centro sin-perfil">
+    <p class="kompa-texto-gris">Todavía no tienes un perfil</p>
+    <ion-button expand="block" class="kompa-boton boton-crear" (click)="irARegistro()">Crear cuenta</ion-button>
+  </div>
+  }
+</ion-content>

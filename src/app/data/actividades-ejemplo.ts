@@ -1,5 +1,6 @@
-// Equivale a data/actividad/ActividadesEjemplo.kt
-import { Actividad, ORIGEN_LOCAL } from '../models/actividad.model';
+// Actividades que se siembran la primera vez que se abre la app.
+import type { Actividad } from '../features/actividades/models/actividad.model';
+import { ORIGEN_LOCAL } from '../features/actividades/models/actividad.model';
 
 export const ACTIVIDADES_EJEMPLO: Actividad[] = [
   {

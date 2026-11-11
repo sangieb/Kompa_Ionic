@@ -1,0 +1,27 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="toolbar-blanca">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/perfil-preview" text=""></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [scrollY]="false">
+  <div class="contenedor">
+    <h1 class="titulo">¡Tu perfil está listo!</h1>
+    <p class="subtitulo kompa-texto-gris">Es hora de encontrar a tu próximo Kompa de viaje</p>
+
+    <div class="zona-animacion">
+      <app-avion-animacion (vueloCompletado)="alTerminarVuelo()"></app-avion-animacion>
+
+      <ion-button
+        class="kompa-boton boton-continuar"
+        [class.visible]="mostrarBoton()"
+        [disabled]="!mostrarBoton() || guardando()"
+        (click)="continuar()"
+      >
+        Empezar a explorar
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

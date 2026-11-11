@@ -47,10 +47,10 @@ ion-button.kompa-boton {
   text-transform: none;
 }
 
-// Barra superior morada
-ion-toolbar.kompa-toolbar {
-  --background: var(--ion-color-primary);
-  --color: #ffffff;
+// Barra blanca sin borde que usan casi todas las páginas
+ion-toolbar.toolbar-blanca {
+  --background: #ffffff;
+  --border-width: 0;
 }
 
 .kompa-texto-gris {

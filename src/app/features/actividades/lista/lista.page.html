@@ -1,0 +1,57 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="toolbar-blanca">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title class="titulo">Actividades cerca</ion-title>
+  </ion-toolbar>
+
+  <ion-toolbar class="toolbar-blanca">
+    <ion-searchbar placeholder="Buscar por nombre, lugar u origen…" [debounce]="0" (ionInput)="alBuscar($event)">
+    </ion-searchbar>
+
+    <div class="chips">
+      @for (o of opcionesOrigen; track o.etiqueta) {
+      <ion-chip [class.seleccionado]="o === origenSeleccionado" (click)="elegirOrigen(o)"> {{ o.etiqueta }} </ion-chip>
+      }
+    </div>
+
+    <div class="chips">
+      @for (d of opcionesDuracion; track d.etiqueta) {
+      <ion-chip [class.seleccionado]="d === duracionSeleccionada" (click)="elegirDuracion(d)">
+        {{ d.etiqueta }}
+      </ion-chip>
+      }
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (resultados().length === 0) {
+  <p class="vacio kompa-texto-gris">Todavía no hay actividades cerca</p>
+  }
+
+  <div class="lista">
+    @for (a of resultados(); track a.id) {
+    <article class="tarjeta">
+      <div class="foto">
+        @if (a.fotoRuta) {
+        <img [src]="a.fotoRuta" alt="Foto de la actividad" />
+        } @else {
+        <ion-icon name="image-outline"></ion-icon>
+        }
+      </div>
+
+      <div class="datos">
+        <h2 class="nombre">{{ a.nombre }}</h2>
+        <p class="secundario">{{ ubicacion(a) }}</p>
+        <p class="secundario">Creada por: {{ a.creadoPor }}</p>
+        <p class="pie">
+          <span class="duracion">{{ duracion(a) }}</span>
+          <span class="secundario">{{ fecha(a) }}</span>
+        </p>
+      </div>
+    </article>
+    }
+  </div>
+</ion-content>

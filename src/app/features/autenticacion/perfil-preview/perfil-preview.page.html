@@ -1,0 +1,21 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="toolbar-blanca">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/registro" text=""></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (perfil; as p) {
+  <div class="contenido">
+    <h1 class="titulo">Así se verá tu perfil</h1>
+    <p class="subtitulo kompa-texto-gris">Revisa que todo esté correcto antes de confirmar</p>
+
+    <app-perfil-resumen [perfil]="p" />
+
+    <ion-button expand="block" class="kompa-boton boton-confirmar" (click)="confirmar()"> Confirmar perfil </ion-button>
+    <ion-button expand="block" fill="clear" class="boton-editar" (click)="editar()"> Editar información </ion-button>
+  </div>
+  }
+</ion-content>

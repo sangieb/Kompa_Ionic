@@ -1,0 +1,40 @@
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+
+import type { Perfil } from '../../../core/perfil/perfil.model';
+import { RegistroBorradorService } from '../registro-borrador.service';
+
+import { ConfirmacionPage } from './confirmacion.page';
+
+const PERFIL_PRUEBA: Perfil = {
+  nombre: 'Ana Tester',
+  correo: 'ana@kompa.co',
+  fechaNacimiento: '31/05/2000',
+  nacionalidad: 'Colombiana/o',
+  genero: 'Mujer',
+  conectar: ['Mujeres'],
+  idiomas: ['Español'],
+  intereses: ['Senderismo'],
+  fotoUri: null,
+};
+
+describe('ConfirmacionPage', () => {
+  let component: ConfirmacionPage;
+  let fixture: ComponentFixture<ConfirmacionPage>;
+
+  beforeEach(() => {
+    // Sin borrador la página navega a /registro: se siembran datos de registro.
+    TestBed.inject(RegistroBorradorService).guardar({
+      perfil: PERFIL_PRUEBA,
+      credenciales: { sal: '0011', hash: 'aabb' },
+    });
+
+    fixture = TestBed.createComponent(ConfirmacionPage);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});

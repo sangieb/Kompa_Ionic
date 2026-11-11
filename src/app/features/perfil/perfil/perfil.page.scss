@@ -1,0 +1,38 @@
+.titulo {
+  color: var(--ion-color-tertiary);
+  font-weight: bold;
+}
+
+.centro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.sin-perfil {
+  padding: 0 24px;
+}
+
+.contenido {
+  padding: 32px 24px 40px;
+
+  .titulo {
+    margin: 0;
+    font-size: 24px;
+  }
+}
+
+.subtitulo {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.boton-salir {
+  margin-top: 32px;
+}
+
+.boton-crear {
+  margin-top: 16px;
+}
