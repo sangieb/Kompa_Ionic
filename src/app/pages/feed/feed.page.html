@@ -1,0 +1,42 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="toolbar-blanca">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title class="titulo">Feed de publicaciones</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @switch (estado()) {
+    @case ('cargando') {
+      <div class="centro">
+        <ion-spinner color="primary"></ion-spinner>
+      </div>
+    }
+    @case ('error') {
+      <div class="centro">
+        <p class="kompa-texto-gris">No pudimos cargar las publicaciones</p>
+        <ion-button class="boton-reintentar" (click)="cargar()">Reintentar</ion-button>
+      </div>
+    }
+    @case ('exito') {
+      @if (publicaciones().length === 0) {
+        <div class="centro">
+          <p class="kompa-texto-gris">Todavía no hay publicaciones</p>
+        </div>
+      } @else {
+        <div class="lista">
+          @for (p of publicaciones(); track p.id) {
+            <article class="tarjeta">
+              <p class="autor">{{ p.autor }}</p>
+              <h2 class="titulo-pub">{{ p.titulo }}</h2>
+              <p class="cuerpo">{{ p.cuerpo }}</p>
+              <p class="fecha">{{ fecha(p) }}</p>
+            </article>
+          }
+        </div>
+      }
+    }
+  }
+</ion-content>

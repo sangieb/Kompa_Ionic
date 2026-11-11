@@ -38,4 +38,8 @@ export const routes: Routes = [
     path: 'lista',
     loadComponent: () => import('./pages/lista/lista.page').then((m) => m.ListaPage),
   },
+  {
+    path: 'feed',
+    loadComponent: () => import('./pages/feed/feed.page').then((m) => m.FeedPage),
+  },
 ];

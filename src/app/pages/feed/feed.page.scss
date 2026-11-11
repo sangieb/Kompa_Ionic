@@ -1,0 +1,70 @@
+.toolbar-blanca {
+  --background: #ffffff;
+  --border-width: 0;
+}
+
+.titulo {
+  color: var(--ion-color-tertiary);
+  font-weight: bold;
+}
+
+.centro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 15px;
+}
+
+.boton-reintentar {
+  margin-top: 12px;
+  --border-radius: 20px;
+  text-transform: none;
+}
+
+/* ---- item_publicacion.xml ---- */
+.lista {
+  padding-bottom: 24px;
+}
+
+.tarjeta {
+  margin: 8px 16px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+
+  p {
+    margin: 4px 0 0;
+  }
+}
+
+.autor {
+  margin-top: 0 !important;
+  color: var(--ion-color-primary);
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.titulo-pub {
+  margin: 4px 0 0;
+  color: #2b2b2b;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+// maxLines="2" + ellipsize="end"
+.cuerpo {
+  color: var(--kompa-gray-text);
+  font-size: 13px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fecha {
+  color: var(--kompa-gray-text);
+  font-size: 12px;
+}
