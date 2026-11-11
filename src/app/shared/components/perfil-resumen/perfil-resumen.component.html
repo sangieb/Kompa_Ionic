@@ -1,10 +1,22 @@
-<div class="foto">
+<button
+  type="button"
+  class="foto"
+  [class.editable]="editable"
+  [disabled]="!editable"
+  [attr.aria-label]="editable ? 'Cambiar foto de perfil' : 'Foto de perfil'"
+  (click)="editarFoto.emit()"
+>
   @if (perfil.fotoUri) {
     <img [src]="perfil.fotoUri" alt="Foto de perfil" />
   } @else {
     <ion-icon name="camera"></ion-icon>
   }
-</div>
+  @if (editable) {
+    <span class="badge-camera">
+      <ion-icon name="camera"></ion-icon>
+    </span>
+  }
+</button>
 
 <h2 class="nombre">{{ perfil.nombre }}</h2>
 <p class="correo kompa-texto-gris">{{ perfil.correo }}</p>

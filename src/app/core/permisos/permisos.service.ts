@@ -6,13 +6,7 @@ import { Geolocation } from '@capacitor/geolocation';
 import { MensajeService } from '../mensaje/mensaje.service';
 
 /** Estado de un permiso nativo, igual que PermissionState de Capacitor. */
-export type EstadoPermiso =
-  | 'granted'
-  | 'granted-always'
-  | 'limited'
-  | 'denied'
-  | 'prompt'
-  | 'prompt-with-rationale';
+export type EstadoPermiso = 'granted' | 'granted-always' | 'limited' | 'denied' | 'prompt' | 'prompt-with-rationale';
 
 export function permisoConcedido(estado: EstadoPermiso | null | undefined): boolean {
   // 'limited' es el acceso parcial a fotos de Android 14+: alcanza para elegir.
@@ -38,6 +32,10 @@ export class PermisosService {
   }
 
   async solicitarGaleria(): Promise<boolean> {
+    // En Android el selector de galería del sistema no requiere permiso y la
+    // pide (Camera.requestPermissions con alias 'photos') nunca resuelve (bug
+    // conocido de @capacitor/camera). En iOS sí hace falta pedirlos.
+    if (Capacitor.getPlatform() !== 'ios') return true;
     const estado = await this.pedir(async () => {
       return (await Camera.requestPermissions({ permissions: ['photos'] })).photos;
     });

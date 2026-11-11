@@ -19,6 +19,7 @@ import { addIcons } from 'ionicons';
 import { camera, imageOutline, images, search } from 'ionicons/icons';
 import * as L from 'leaflet';
 
+import { FotoOpcionesService } from '../../../core/foto/foto-opciones.service';
 import { FotoService } from '../../../core/foto/foto.service';
 import { MensajeService } from '../../../core/mensaje/mensaje.service';
 import { PerfilService } from '../../../core/perfil/perfil.service';
@@ -107,6 +108,7 @@ export class NuevaActividadPage implements OnDestroy {
   private readonly perfilService = inject(PerfilService);
   private readonly mensajes = inject(MensajeService);
   private readonly permisos = inject(PermisosService);
+  private readonly opciones = inject(FotoOpcionesService);
   private readonly ubicacion = inject(UbicacionService);
   private readonly fotos = inject(FotoService);
   private readonly navCtrl = inject(NavController);
@@ -137,6 +139,13 @@ export class NuevaActividadPage implements OnDestroy {
 
   async elegirDeGaleria(): Promise<void> {
     await this.obtenerFoto('galeria');
+  }
+
+  /** Abre el selector cámara/galería y delega en obtenerFoto con el origen elegido. */
+  async elegirFoto(): Promise<void> {
+    const fuente = await this.opciones.elegirFuente();
+    if (!fuente) return;
+    await this.obtenerFoto(fuente);
   }
 
   private async obtenerFoto(desde: 'camara' | 'galeria'): Promise<void> {

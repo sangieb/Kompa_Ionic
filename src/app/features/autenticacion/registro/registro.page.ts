@@ -25,6 +25,7 @@ import { add, camera } from 'ionicons/icons';
 
 import { MIN_PASSWORD_LEN } from '../../../core/auth/auth.service';
 import { hashPassword } from '../../../core/auth/password-hash';
+import { FotoOpcionesService } from '../../../core/foto/foto-opciones.service';
 import { FotoService } from '../../../core/foto/foto.service';
 import { MensajeService } from '../../../core/mensaje/mensaje.service';
 import { PermisosService } from '../../../core/permisos/permisos.service';
@@ -41,8 +42,9 @@ import {
   mayorDeEdad,
   requeridoConContenido,
 } from '../../../shared/utils/validadores';
-import { CatalogoService } from './catalogo.service';
 import { RegistroBorradorService } from '../registro-borrador.service';
+
+import { CatalogoService } from './catalogo.service';
 
 const MAX_INTERESES = 5;
 
@@ -142,6 +144,7 @@ export class RegistroPage implements OnInit {
   private readonly mensajes = inject(MensajeService);
   private readonly permisos = inject(PermisosService);
   private readonly fotos = inject(FotoService);
+  private readonly opciones = inject(FotoOpcionesService);
   private readonly borrador = inject(RegistroBorradorService);
   private readonly router = inject(Router);
 
@@ -162,11 +165,15 @@ export class RegistroPage implements OnInit {
     return this.formulario.controls.intereses.value;
   }
 
-  /** Abre la galería, como pickImageLauncher.launch("image/*") */
+  /** Muestra el selector cámara/galería y comprueba el permiso del origen elegido. */
   async elegirFoto(): Promise<void> {
-    if (!(await this.permisos.asegurarGaleria())) return;
+    const fuente = await this.opciones.elegirFuente();
+    if (!fuente) return;
 
-    const { foto, error } = await this.fotos.elegirDeGaleria();
+    const permitido = await (fuente === 'camara' ? this.permisos.asegurarCamara() : this.permisos.asegurarGaleria());
+    if (!permitido) return;
+
+    const { foto, error } = fuente === 'camara' ? await this.fotos.tomarFoto() : await this.fotos.elegirDeGaleria();
     if (error) {
       await this.mensajes.mostrar(error);
       return;

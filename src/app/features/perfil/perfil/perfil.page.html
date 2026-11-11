@@ -17,7 +17,9 @@
     <h1 class="titulo">Tu perfil</h1>
     <p class="subtitulo kompa-texto-gris">Así te ven los demás viajeros</p>
 
-    <app-perfil-resumen [perfil]="p" />
+    <app-perfil-resumen [perfil]="p" [editable]="true" (editarFoto)="cambiarFoto()" />
+
+    <p class="ayuda-foto">Toca la foto para cambiarla</p>
 
     <ion-button expand="block" class="kompa-boton boton-salir" (click)="cerrarSesion()"> Cerrar sesión </ion-button>
   </div>

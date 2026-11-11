@@ -21,7 +21,7 @@
 
     <!-- Foto del grupo: taller 4.3 -->
     <h2 class="etiqueta">Foto del grupo</h2>
-    <button type="button" class="foto" aria-label="Foto del grupo" (click)="tomarFotografia()">
+    <button type="button" class="foto" aria-label="Foto del grupo" (click)="elegirFoto()">
       @if (fotoUri()) {
       <img [src]="fotoUri()" alt="Foto del grupo" />
       } @else {
