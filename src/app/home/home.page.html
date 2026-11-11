@@ -1,12 +1,19 @@
-<ion-header>
-  <ion-toolbar class="kompa-toolbar">
-    <ion-title>Kompa</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" [scrollY]="false">
+  <div #mapa class="mapa"></div>
 
-<ion-content class="ion-padding">
-  <h1>¡La app funciona!</h1>
-  <p class="kompa-texto-gris">Probando los colores de Kompa.</p>
-  <ion-button expand="block" class="kompa-boton">Botón primario</ion-button>
-  <ion-button expand="block" class="kompa-boton" fill="outline">Botón con borde</ion-button>
+  <span slot="fixed" class="titulo">Kompa</span>
+
+  <ion-button slot="fixed" class="boton-salir" (click)="salir()">Salir</ion-button>
+
+  <ion-button slot="fixed" class="boton-flotante boton-lista" (click)="irALista()">Show list</ion-button>
+  <ion-button slot="fixed" class="boton-flotante boton-feed" (click)="irAFeed()">Feed</ion-button>
+
+  <div slot="fixed" class="fabs">
+    <button type="button" class="fab fab-centrar" aria-label="Centrar mapa" (click)="centrarEnMiUbicacion()">
+      <ion-icon name="locate"></ion-icon>
+    </button>
+    <button type="button" class="fab fab-agregar" aria-label="Agregar actividad" (click)="irANuevaActividad()">
+      <ion-icon name="add"></ion-icon>
+    </button>
+  </div>
 </ion-content>
