@@ -1,0 +1,104 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="toolbar-blanca">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/inicio" text=""></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="formulario">
+    <h1 class="titulo">Crea tu cuenta</h1>
+    <p class="subtitulo kompa-texto-gris">Encuentra a tu próximo grupo de viaje o amistad</p>
+
+    <!-- Foto de perfil -->
+    <div class="foto">
+      <button type="button" class="foto-circulo" aria-label="Foto de perfil" (click)="elegirFoto()">
+        @if (fotoUri) {
+          <img [src]="fotoUri" alt="Foto de perfil" />
+        } @else {
+          <ion-icon name="camera"></ion-icon>
+        }
+      </button>
+      <button type="button" class="foto-agregar" aria-label="Agregar foto" (click)="elegirFoto()">
+        <ion-icon name="add"></ion-icon>
+      </button>
+    </div>
+    <p class="ayuda-foto">Toca para subir tu foto</p>
+
+    <!-- Datos -->
+    <ion-input class="campo primer-campo" fill="outline" label="Nombre completo" labelPlacement="floating"
+      autocomplete="name" [value]="nombre" (ionInput)="nombre = $any($event).detail.value ?? ''">
+    </ion-input>
+
+    <ion-input class="campo" fill="outline" label="Correo electrónico" labelPlacement="floating"
+      type="email" inputmode="email" autocomplete="email"
+      [value]="correo" (ionInput)="correo = $any($event).detail.value ?? ''">
+    </ion-input>
+
+    <ion-input class="campo" fill="outline" label="Contraseña" labelPlacement="floating"
+      type="password" autocomplete="new-password"
+      [value]="password" (ionInput)="password = $any($event).detail.value ?? ''">
+      <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+    </ion-input>
+
+    <ion-input class="campo" fill="outline" label="Fecha de nacimiento" labelPlacement="stacked"
+      type="date" [max]="fechaMaxima"
+      [value]="fechaIso" (ionInput)="fechaIso = $any($event).detail.value ?? ''">
+    </ion-input>
+
+    <ion-select class="campo" fill="outline" label="Nacionalidad" labelPlacement="floating"
+      interface="popover" [value]="nacionalidad" (ionChange)="nacionalidad = $any($event).detail.value">
+      @for (n of catalogos.nacionalidades; track n) {
+        <ion-select-option [value]="n">{{ n }}</ion-select-option>
+      }
+    </ion-select>
+
+    <ion-select class="campo" fill="outline" label="Idioma que hablas" labelPlacement="floating"
+      interface="popover" [value]="idioma" (ionChange)="idioma = $any($event).detail.value">
+      @for (i of catalogos.idiomas; track i) {
+        <ion-select-option [value]="i">{{ i }}</ion-select-option>
+      }
+    </ion-select>
+
+    <!-- Género -->
+    <h2 class="etiqueta">Género</h2>
+    <ion-radio-group [value]="genero" (ionChange)="genero = $any($event).detail.value">
+      @for (g of generos; track g) {
+        <ion-radio class="radio" [value]="g" labelPlacement="end" justify="start">{{ g }}</ion-radio>
+      }
+    </ion-radio-group>
+
+    <!-- Con quién conectar -->
+    <h2 class="etiqueta">¿Con quién quieres conectar?</h2>
+    <div class="chips">
+      @for (o of opcionesConectar; track o) {
+        <ion-chip [class.seleccionado]="conectar.includes(o)" (click)="alternarConectar(o)">{{ o }}</ion-chip>
+      }
+    </div>
+
+    <!-- Intereses -->
+    <h2 class="etiqueta">Tus intereses</h2>
+    <p class="contador kompa-texto-gris">
+      Elige hasta {{ maxIntereses }} ({{ intereses.length }}/{{ maxIntereses }})
+    </p>
+    <div class="chips">
+      @for (i of catalogos.intereses; track i) {
+        <ion-chip [class.seleccionado]="intereses.includes(i)" (click)="alternarInteres(i)">{{ i }}</ion-chip>
+      }
+    </div>
+
+    <ion-button expand="block" class="kompa-boton boton-crear" [disabled]="cargando" (click)="crearCuenta()">
+      Crear cuenta
+    </ion-button>
+
+    <ion-checkbox class="acepto" labelPlacement="end" justify="start"
+      [checked]="aceptaDatos" (ionChange)="aceptaDatos = $any($event).detail.checked">
+      Acepto el tratamiento de mis datos personales conforme a la Política de Privacidad
+    </ion-checkbox>
+
+    <p class="terminos kompa-texto-gris">
+      Al registrarte aceptas nuestros Términos y Condiciones y Política de Privacidad
+    </p>
+  </div>
+</ion-content>

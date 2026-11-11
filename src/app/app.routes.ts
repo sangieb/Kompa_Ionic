@@ -22,4 +22,8 @@ export const routes: Routes = [
     path: 'recuperar',
     loadComponent: () => import('./pages/recuperar/recuperar.page').then((m) => m.RecuperarPage),
   },
+  {
+    path: 'registro',
+    loadComponent: () => import('./pages/registro/registro.page').then((m) => m.RegistroPage),
+  },
 ];

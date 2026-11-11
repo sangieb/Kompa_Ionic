@@ -1,0 +1,142 @@
+.toolbar-blanca {
+  --background: #ffffff;
+  --border-width: 0;
+}
+
+.formulario {
+  padding: 24px 24px 40px;
+}
+
+.titulo {
+  margin: 0;
+  color: var(--ion-color-tertiary);
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.subtitulo {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+/* ---- Foto de perfil (bg_profile_circle + bg_camera_button) ---- */
+.foto {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 28px auto 0;
+}
+
+.foto-circulo {
+  width: 120px;
+  height: 120px;
+  padding: 0;
+  border: 2px solid var(--kompa-purple-light);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--kompa-purple-ultra-light);
+  color: var(--ion-color-primary);
+  font-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.foto-agregar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  color: #ffffff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ayuda-foto {
+  margin: 8px 0 0;
+  text-align: center;
+  color: var(--ion-color-primary);
+  font-size: 12px;
+}
+
+/* ---- Campos ---- */
+.campo {
+  margin-top: 16px;
+  --highlight-color-focused: var(--ion-color-primary);
+}
+
+.primer-campo {
+  margin-top: 24px;
+}
+
+.etiqueta {
+  margin: 24px 0 8px;
+  color: #2b2b2b;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.radio {
+  display: block;
+  margin: 8px 0;
+  --color-checked: var(--ion-color-primary);
+}
+
+/* ---- Chips (purple_ultra_light / purple_primary) ---- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+ion-chip {
+  margin: 0 8px 8px 0;
+  border: 1px solid var(--ion-color-secondary);
+  --background: var(--kompa-purple-ultra-light);
+  --color: #2b2b2b;
+}
+
+ion-chip.seleccionado {
+  --background: var(--ion-color-primary);
+  --color: #ffffff;
+}
+
+.contador {
+  margin: 2px 0 8px;
+  font-size: 12px;
+}
+
+/* ---- Final ---- */
+.boton-crear {
+  margin-top: 32px;
+}
+
+.acepto {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--kompa-gray-text);
+  --checkbox-background-checked: var(--ion-color-primary);
+  --border-color-checked: var(--ion-color-primary);
+
+  &::part(label) {
+    white-space: normal;
+  }
+}
+
+.terminos {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 11px;
+}
