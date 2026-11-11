@@ -1,0 +1,33 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="toolbar-blanca">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/login" text=""></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="formulario">
+    <h1 class="titulo">Recuperar contraseña</h1>
+    <p class="descripcion kompa-texto-gris">
+      Te enviaremos un enlace al correo que registraste para restablecer tu contraseña.
+    </p>
+
+    <ion-input
+      class="campo"
+      fill="outline"
+      label="Correo electrónico"
+      labelPlacement="floating"
+      type="email"
+      inputmode="email"
+      autocomplete="email"
+      [value]="correo"
+      (ionInput)="correo = $any($event).detail.value ?? ''"
+      (keyup.enter)="enviar()">
+    </ion-input>
+
+    <ion-button expand="block" class="kompa-boton boton-enviar" (click)="enviar()">
+      Enviar correo de recuperación
+    </ion-button>
+  </div>
+</ion-content>

@@ -1,0 +1,29 @@
+.toolbar-blanca {
+  --background: #ffffff;
+  --border-width: 0;
+}
+
+.formulario {
+  padding: 48px 24px 40px;
+}
+
+.titulo {
+  margin: 0;
+  color: var(--ion-color-tertiary);
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.descripcion {
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+.campo {
+  margin-top: 24px;
+  --highlight-color-focused: var(--ion-color-primary);
+}
+
+.boton-enviar {
+  margin-top: 24px;
+}
