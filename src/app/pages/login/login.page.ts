@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonButtons, IonBackButton, IonContent,
-  IonInput, IonInputPasswordToggle, IonButton,
+  IonInput, IonInputPasswordToggle, IonButton, NavController,
 } from '@ionic/angular';
 import { AuthService, ResultadoLogin } from '../../services/auth.service';
 import { MensajeService } from '../../services/mensaje.service';
@@ -26,7 +26,8 @@ export class LoginPage {
   constructor(
     private auth: AuthService,
     private mensajes: MensajeService,
-    private router: Router
+    private router: Router,
+    private navCtrl: NavController
   ) {}
 
   async iniciarSesion() {
@@ -47,6 +48,10 @@ export class LoginPage {
         break;
       case ResultadoLogin.CONTRASENA_INCORRECTA:
         this.mensajes.mostrar('Contraseña incorrecta');
+        break;
+      case ResultadoLogin.EXITO:
+        await this.mensajes.mostrar('¡Bienvenido a Kompa!');
+        this.navCtrl.navigateRoot('/home');
         break;
     }
   }

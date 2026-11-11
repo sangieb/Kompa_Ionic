@@ -30,4 +30,8 @@ export const routes: Routes = [
     path: 'perfil-preview',
     loadComponent: () => import('./pages/perfil-preview/perfil-preview.page').then((m) => m.PerfilPreviewPage),
   },
+  {
+    path: 'confirmacion',
+    loadComponent: () => import('./pages/confirmacion/confirmacion.page').then((m) => m.ConfirmacionPage),
+  },
 ];
