@@ -1,0 +1,103 @@
+.toolbar-blanca {
+  --background: #ffffff;
+  --border-width: 0;
+}
+
+.contenido {
+  padding: 32px 24px 40px;
+}
+
+.titulo {
+  margin: 0;
+  color: var(--ion-color-tertiary);
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.subtitulo {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.foto {
+  width: 140px;
+  height: 140px;
+  margin: 24px auto 0;
+  border: 2px solid var(--kompa-purple-light);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--kompa-purple-ultra-light);
+  color: var(--ion-color-primary);
+  font-size: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.nombre {
+  margin: 20px 0 0;
+  text-align: center;
+  color: #2b2b2b;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.correo {
+  margin: 2px 0 0;
+  text-align: center;
+  font-size: 13px;
+}
+
+.tarjeta {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--kompa-purple-ultra-light);
+
+  p {
+    margin: 0;
+    color: #2b2b2b;
+    font-size: 14px;
+  }
+
+  p + p {
+    margin-top: 8px;
+  }
+}
+
+.etiqueta {
+  margin: 20px 0 8px;
+  color: #2b2b2b;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+ion-chip {
+  margin: 0 8px 8px 0;
+  border: 1px solid var(--ion-color-secondary);
+  --background: var(--kompa-purple-ultra-light);
+  --color: #2b2b2b;
+  pointer-events: none; // solo se muestran, no se pueden tocar
+}
+
+.boton-confirmar {
+  margin-top: 32px;
+}
+
+.boton-editar {
+  margin-top: 8px;
+  --color: var(--ion-color-primary);
+  font-size: 15px;
+  text-transform: none;
+}

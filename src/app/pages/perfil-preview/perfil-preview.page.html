@@ -1,0 +1,55 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="toolbar-blanca">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/registro" text=""></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (perfil) {
+    <div class="contenido">
+      <h1 class="titulo">Así se verá tu perfil</h1>
+      <p class="subtitulo kompa-texto-gris">Revisa que todo esté correcto antes de confirmar</p>
+
+      <div class="foto">
+        @if (perfil.fotoUri) {
+          <img [src]="perfil.fotoUri" alt="Foto de perfil" />
+        } @else {
+          <ion-icon name="camera"></ion-icon>
+        }
+      </div>
+
+      <h2 class="nombre">{{ perfil.nombre }}</h2>
+      <p class="correo kompa-texto-gris">{{ perfil.correo }}</p>
+
+      <div class="tarjeta">
+        <p>Nacimiento: {{ perfil.fechaNacimiento }}</p>
+        <p>Nacionalidad: {{ perfil.nacionalidad }}</p>
+        <p>Género: {{ perfil.genero }}</p>
+        <p>Conectar con: {{ perfil.conectar }}</p>
+      </div>
+
+      <h3 class="etiqueta">Idiomas</h3>
+      <div class="chips">
+        @for (idioma of idiomas; track idioma) {
+          <ion-chip>{{ idioma }}</ion-chip>
+        }
+      </div>
+
+      <h3 class="etiqueta">Intereses</h3>
+      <div class="chips">
+        @for (interes of intereses; track interes) {
+          <ion-chip>{{ interes }}</ion-chip>
+        }
+      </div>
+
+      <ion-button expand="block" class="kompa-boton boton-confirmar" (click)="confirmar()">
+        Confirmar perfil
+      </ion-button>
+      <ion-button expand="block" fill="clear" class="boton-editar" (click)="editar()">
+        Editar información
+      </ion-button>
+    </div>
+  }
+</ion-content>

@@ -26,4 +26,8 @@ export const routes: Routes = [
     path: 'registro',
     loadComponent: () => import('./pages/registro/registro.page').then((m) => m.RegistroPage),
   },
+  {
+    path: 'perfil-preview',
+    loadComponent: () => import('./pages/perfil-preview/perfil-preview.page').then((m) => m.PerfilPreviewPage),
+  },
 ];
