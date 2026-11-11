@@ -81,8 +81,8 @@ export class HomePage implements OnDestroy {
   }
 
   /** En la app nativa el botón "Feed" abre ProximamenteActivity */
-  irAFeed() {
-    this.router.navigateByUrl('/proximamente');
+    irAFeed() {
+    this.router.navigateByUrl('/feed');
   }
 
   irANuevaActividad() {

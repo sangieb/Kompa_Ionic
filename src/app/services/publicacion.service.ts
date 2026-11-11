@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, from, map, switchMap } from 'rxjs';
 import { AlmacenamientoService } from './almacenamiento.service';
 import { Publicacion } from '../models/publicacion.model';
+import { PUBLICACIONES_EJEMPLO } from '../data/publicaciones-ejemplo';
 import { API_BASE_URL } from '../core/config';
 
 /** Lo que devolvería la API (todo opcional), como PublicacionDto */
@@ -16,7 +17,13 @@ interface PublicacionDto {
   lon?: number | null;
 }
 
-/** Equivale a data/publicacion/PublicacionRepository.kt */
+export interface NuevaPublicacion {
+  titulo: string;
+  cuerpo: string;
+  autor: string;
+}
+
+/** Equivale a data/publicacion/PublicacionRepository.kt, más la opción de publicar */
 @Injectable({ providedIn: 'root' })
 export class PublicacionService {
   private readonly CLAVE = 'publicaciones';
@@ -27,14 +34,24 @@ export class PublicacionService {
   ) {}
 
   async publicacionesLocales(): Promise<Publicacion[]> {
-    const lista = await this.almacenamiento.leer<Publicacion[]>(this.CLAVE, []);
-    // ORDER BY fecha_creacion DESC, titulo ASC
-    return [...lista].sort((a, b) => {
-      const fa = a.fechaCreacion ?? -Infinity;
-      const fb = b.fechaCreacion ?? -Infinity;
-      if (fa !== fb) return fb - fa;
-      return a.titulo.localeCompare(b.titulo);
-    });
+    return ordenar(await this.todas());
+  }
+
+  /** Crea una publicación local y la guarda */
+  async publicar(datos: NuevaPublicacion): Promise<Publicacion> {
+    const nueva: Publicacion = {
+      id: crypto.randomUUID(),
+      titulo: datos.titulo,
+      cuerpo: datos.cuerpo,
+      autor: datos.autor,
+      fechaCreacion: Date.now(),
+      lat: null,
+      lon: null,
+    };
+    const lista = await this.todas();
+    lista.push(nueva);
+    await this.almacenamiento.guardar(this.CLAVE, lista);
+    return nueva;
   }
 
   /**
@@ -45,7 +62,7 @@ export class PublicacionService {
   refrescar(): Observable<Publicacion[]> {
     return this.http.get<PublicacionDto[]>(`${API_BASE_URL}publicaciones`).pipe(
       map((dtos) => aPublicaciones(dtos)),
-      switchMap((nuevas) => from(this.guardar(nuevas))),
+      switchMap((nuevas) => from(this.guardarDeApi(nuevas))),
       catchError((error) => {
         console.warn('Refresco de publicaciones fallido; se conserva el caché local', error);
         return from(this.publicacionesLocales());
@@ -53,16 +70,35 @@ export class PublicacionService {
     );
   }
 
-  /** Inserta o reemplaza por id (OnConflictStrategy.REPLACE) y devuelve la lista */
-  private async guardar(nuevas: Publicacion[]): Promise<Publicacion[]> {
+  /** Inserta o reemplaza por id (OnConflictStrategy.REPLACE) */
+  private async guardarDeApi(nuevas: Publicacion[]): Promise<Publicacion[]> {
     const ids = new Set(nuevas.map((p) => p.id));
-    const actuales = await this.almacenamiento.leer<Publicacion[]>(this.CLAVE, []);
+    const actuales = await this.todas();
     await this.almacenamiento.guardar(this.CLAVE, [
       ...actuales.filter((p) => !ids.has(p.id)),
       ...nuevas,
     ]);
     return this.publicacionesLocales();
   }
+
+  /** La primera vez guarda las publicaciones de ejemplo */
+  private async todas(): Promise<Publicacion[]> {
+    if (!(await this.almacenamiento.existe(this.CLAVE))) {
+      await this.almacenamiento.guardar(this.CLAVE, PUBLICACIONES_EJEMPLO);
+      return [...PUBLICACIONES_EJEMPLO];
+    }
+    return this.almacenamiento.leer<Publicacion[]>(this.CLAVE, []);
+  }
+}
+
+/** ORDER BY fecha_creacion DESC, titulo ASC */
+function ordenar(lista: Publicacion[]): Publicacion[] {
+  return [...lista].sort((a, b) => {
+    const fa = a.fechaCreacion ?? -Infinity;
+    const fb = b.fechaCreacion ?? -Infinity;
+    if (fa !== fb) return fb - fa;
+    return a.titulo.localeCompare(b.titulo);
+  });
 }
 
 /** Equivale a aPublicaciones(): descarta las que no tienen id y repetidas */

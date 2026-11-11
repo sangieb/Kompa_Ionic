@@ -8,6 +8,42 @@
 </ion-header>
 
 <ion-content>
+  <!-- Formulario para publicar -->
+  @if (mostrarFormulario()) {
+    <section class="tarjeta formulario">
+      <h2 class="titulo-formulario">Nueva publicación</h2>
+
+      <ion-input
+        class="campo"
+        fill="outline"
+        label="Título"
+        labelPlacement="floating"
+        [maxlength]="maxTitulo"
+        [counter]="true"
+        [value]="nuevoTitulo"
+        (ionInput)="nuevoTitulo = $any($event).detail.value ?? ''">
+      </ion-input>
+
+      <ion-textarea
+        class="campo"
+        fill="outline"
+        label="¿Qué quieres compartir?"
+        labelPlacement="floating"
+        [autoGrow]="true"
+        [rows]="3"
+        [maxlength]="maxCuerpo"
+        [counter]="true"
+        [value]="nuevoCuerpo"
+        (ionInput)="nuevoCuerpo = $any($event).detail.value ?? ''">
+      </ion-textarea>
+
+      <div class="acciones">
+        <ion-button fill="clear" class="boton-cancelar" (click)="cancelar()">Cancelar</ion-button>
+        <ion-button class="boton-publicar" [disabled]="publicando()" (click)="publicar()">Publicar</ion-button>
+      </div>
+    </section>
+  }
+
   @switch (estado()) {
     @case ('cargando') {
       <div class="centro">
@@ -38,5 +74,12 @@
         </div>
       }
     }
+  }
+
+  <!-- Botón para escribir -->
+  @if (!mostrarFormulario()) {
+    <button slot="fixed" type="button" class="fab" aria-label="Nueva publicación" (click)="abrirFormulario()">
+      <ion-icon name="add"></ion-icon>
+    </button>
   }
 </ion-content>
