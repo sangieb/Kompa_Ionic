@@ -42,4 +42,8 @@ export const routes: Routes = [
     path: 'feed',
     loadComponent: () => import('./pages/feed/feed.page').then((m) => m.FeedPage),
   },
+  {
+    path: 'nueva-actividad',
+    loadComponent: () => import('./pages/nueva-actividad/nueva-actividad.page').then((m) => m.NuevaActividadPage),
+  },
 ];
