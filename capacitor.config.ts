@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'kompa-ionic',
+  appId: 'co.edu.usco.kompa',
+  appName: 'Kompa',
   webDir: 'www'
 };
 
