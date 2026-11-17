@@ -29,14 +29,14 @@
 
       <h2>1. Quiénes somos y cómo contactarnos</h2>
       <p>
-        Kompa es una aplicación de comunidad para viajeros desarrollada por la {{ responsable.dependencia }} de la
+        Kompa es una aplicación de comunidad para viajeros desarrollada por la {{ controller.department }} de la
         Universidad Surcolombiana. El responsable del tratamiento de los datos personales es
-        <strong>{{ responsable.nombre }}</strong
-        >, con domicilio en {{ responsable.direccion }}.
+        <strong>{{ controller.name }}</strong
+        >, con domicilio en {{ controller.address }}.
       </p>
       <p>
         Canal de atención y protección de datos:
-        <strong>{{ responsable.correo }}</strong
+        <strong>{{ controller.email }}</strong
         >. Allí puedes presentar consultas, reclamos o solicitudes relacionadas con tus datos personales.
       </p>
 
@@ -175,7 +175,7 @@
         <li>Acceder de forma gratuita a tus datos personales.</li>
       </ul>
       <p>
-        Puedes ejercer estos derechos escribiendo a <strong>{{ responsable.correo }}</strong
+        Puedes ejercer estos derechos escribiendo a <strong>{{ controller.email }}</strong
         >. Las consultas se atienden en un término máximo de 10 días hábiles y los reclamos en un término máximo de 15
         días hábiles, conforme a la ley. Antes de acudir a la SIC debes agotar el trámite de consulta o reclamo ante el
         responsable.
@@ -223,10 +223,10 @@
 
       <h2>14. Contacto</h2>
       <p>
-        {{ responsable.nombre }}<br />
-        {{ responsable.dependencia }}<br />
-        {{ responsable.direccion }}<br />
-        Correo: <strong>{{ responsable.correo }}</strong>
+        {{ controller.name }}<br />
+        {{ controller.department }}<br />
+        {{ controller.address }}<br />
+        Correo: <strong>{{ controller.email }}</strong>
       </p>
 
       <p class="pie-legal">

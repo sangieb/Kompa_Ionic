@@ -1,14 +1,14 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { MensajeService } from '../../../core/mensaje/mensaje.service';
-import { isoHaceAnios } from '../../../shared/utils/fechas';
-import { RegistroBorradorService } from '../registro-borrador.service';
+import { MessageService } from '../../../core/message/message.service';
+import { isoHaceAnios } from '../../../shared/utils/dates';
+import { RegistrationDraftService } from '../registration-draft.service';
 
-import { RegistroPage } from './registro.page';
+import { RegisterPage } from './register.page';
 
 /** Llena todo el formulario salvo los consentimientos y el género. */
-function llenarDatosObligatorios(component: RegistroPage): void {
+function llenarDatosObligatorios(component: RegisterPage): void {
   component.formulario.patchValue({
     nombre: 'Ana Tester',
     correo: 'ana@kompa.co',
@@ -21,15 +21,15 @@ function llenarDatosObligatorios(component: RegistroPage): void {
   });
 }
 
-describe('RegistroPage', () => {
-  let component: RegistroPage;
-  let fixture: ComponentFixture<RegistroPage>;
+describe('RegisterPage', () => {
+  let component: RegisterPage;
+  let fixture: ComponentFixture<RegisterPage>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [{ provide: MensajeService, useValue: { mostrar: vi.fn() } }],
+      providers: [{ provide: MessageService, useValue: { show: vi.fn() } }],
     });
-    fixture = TestBed.createComponent(RegistroPage);
+    fixture = TestBed.createComponent(RegisterPage);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -61,7 +61,7 @@ describe('RegistroPage', () => {
 
   it('no guarda el borrador si falta aceptar los consentimientos', async () => {
     llenarDatosObligatorios(component);
-    const borrador = TestBed.inject(RegistroBorradorService);
+    const borrador = TestBed.inject(RegistrationDraftService);
     const guardar = vi.spyOn(borrador, 'guardar');
 
     await component.crearCuenta();

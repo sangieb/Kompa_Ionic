@@ -3,8 +3,10 @@
     <img class="logo" src="assets/kompa-logo.svg" alt="Logo de Kompa" />
 
     <div class="botones">
-      <ion-button expand="block" class="kompa-boton boton-crear" (click)="irA('/registro')"> Crear cuenta </ion-button>
-      <ion-button expand="block" fill="outline" class="kompa-boton boton-login" (click)="irA('/login')">
+      <ion-button expand="block" class="kompa-boton boton-crear" (click)="navigateTo('/register')">
+        Crear cuenta
+      </ion-button>
+      <ion-button expand="block" fill="outline" class="kompa-boton boton-login" (click)="navigateTo('/login')">
         Iniciar sesión
       </ion-button>
     </div>

@@ -10,8 +10,8 @@
       [attr.aria-label]="editable ? 'Cambiar foto de perfil' : 'Foto de perfil'"
       (click)="editarFoto.emit()"
     >
-      @if (perfil.fotoUri) {
-        <img [src]="perfil.fotoUri" alt="Foto de perfil" />
+      @if (perfil.photoUri) {
+        <img [src]="perfil.photoUri" alt="Foto de perfil" />
       } @else {
         <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
       }
@@ -22,14 +22,14 @@
       }
     </button>
 
-    <h1 class="nombre">{{ perfil.nombre || 'Tu perfil' }}</h1>
-    <p class="correo">{{ perfil.correo }}</p>
+    <h1 class="nombre">{{ perfil.name || 'Tu perfil' }}</h1>
+    <p class="correo">{{ perfil.email }}</p>
 
     <div class="badges">
       @if (perfil.nacionalidad) {
         <span class="badge">
           <ion-icon name="flag-outline" aria-hidden="true"></ion-icon>
-          {{ perfil.nacionalidad }}
+          {{ perfil.nationality }}
         </span>
       }
       @if (edad !== null) {
@@ -53,7 +53,7 @@
     </div>
     <div class="separador" aria-hidden="true"></div>
     <div class="dato">
-      <strong>{{ perfil.conectar.length }}</strong>
+      <strong>{{ perfil.connectWith.length }}</strong>
       <span>Conexiones</span>
     </div>
   </div>
@@ -69,16 +69,16 @@
     <div class="fila">
       <span class="icono"><ion-icon name="flag-outline" aria-hidden="true"></ion-icon></span>
       <span class="etiqueta">Nacionalidad</span>
-      <span class="valor">{{ perfil.nacionalidad || 'No indicada' }}</span>
+      <span class="valor">{{ perfil.nationality || 'No indicada' }}</span>
     </div>
-    @if (perfil.genero) {
+    @if (perfil.gender) {
       <div class="fila">
         <span class="icono"><ion-icon name="person-outline" aria-hidden="true"></ion-icon></span>
         <span class="etiqueta">Género</span>
-        <span class="valor">{{ perfil.genero }}</span>
+        <span class="valor">{{ perfil.gender }}</span>
       </div>
     }
-    @if (perfil.conectar.length) {
+    @if (perfil.connectWith.length) {
       <div class="fila">
         <span class="icono"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span>
         <span class="etiqueta">Conectar con</span>
@@ -92,9 +92,9 @@
       <ion-icon name="language-outline" aria-hidden="true"></ion-icon>
       Idiomas
     </h2>
-    @if (perfil.idiomas.length) {
+    @if (perfil.languages.length) {
       <div class="chips">
-        @for (idioma of perfil.idiomas; track idioma) {
+        @for (idioma of perfil.languages; track idioma) {
           <ion-chip>{{ idioma }}</ion-chip>
         }
       </div>
@@ -108,9 +108,9 @@
       <ion-icon name="heart-outline" aria-hidden="true"></ion-icon>
       Intereses
     </h2>
-    @if (perfil.intereses.length) {
+    @if (perfil.interests.length) {
       <div class="chips">
-        @for (interes of perfil.intereses; track interes) {
+        @for (interes of perfil.interests; track interes) {
           <ion-chip>{{ interes }}</ion-chip>
         }
       </div>

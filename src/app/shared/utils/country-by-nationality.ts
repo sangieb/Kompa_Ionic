@@ -1,15 +1,27 @@
-/** Código ISO de país para las búsquedas de Nominatim (countrycodes). */
-export function codigoPais(nacionalidad: string | null | undefined): string | null {
-  const n = nacionalidad?.trim().toLowerCase();
+const NATIONALITY_TO_COUNTRY: Record<string, string> = {
+  mexicana: 'mx',
+  mexicano: 'mx',
+  colombiana: 'co',
+  colombiano: 'co',
+  argentina: 'ar',
+  argentino: 'ar',
+  chilena: 'cl',
+  chileno: 'cl',
+  peruana: 'pe',
+  peruano: 'pe',
+  espa: 'es',
+  estadounidense: 'us',
+  brasile: 'br',
+  ecuatoriana: 'ec',
+  ecuatoriano: 'ec',
+};
+
+/** ISO country code for Nominatim geocoding searches (countrycodes). */
+export function countryCode(nationality: string | null | undefined): string | null {
+  const n = nationality?.trim().toLowerCase();
   if (!n) return null;
-  if (n.includes('mexicana')) return 'mx';
-  if (n.includes('colombiana')) return 'co';
-  if (n.includes('argentina')) return 'ar';
-  if (n.includes('chilena')) return 'cl';
-  if (n.includes('peruana')) return 'pe';
-  if (n.includes('espa')) return 'es';
-  if (n.includes('estadounidense')) return 'us';
-  if (n.includes('brasile')) return 'br';
-  if (n.includes('ecuatoriana')) return 'ec';
+  for (const [key, code] of Object.entries(NATIONALITY_TO_COUNTRY)) {
+    if (n.includes(key)) return code;
+  }
   return null;
 }

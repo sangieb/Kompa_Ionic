@@ -1,37 +1,63 @@
 import { Injectable, inject } from '@angular/core';
 
-import { AlmacenamientoService } from '../storage/almacenamiento.service';
-import { ClavesAlmacenamiento } from '../storage/claves';
+import { StorageKeys } from '../storage/storage-keys';
+import { StorageService } from '../storage/storage.service';
 
-import { TERMINOS_VERSION } from './terminos';
+import { TERMS_VERSION } from './terms';
 
-/** Prueba local de que el usuario aceptó los documentos legales. */
-export interface Consentimiento {
+/** Record of user acceptance of legal documents. */
+export interface Consent {
   version: string;
-  /** Fecha y hora ISO en la que se otorgó la aceptación. */
-  fecha: string;
-  terminos: boolean;
-  datos: boolean;
+  /** ISO datetime when consent was granted. */
+  date: string;
+  terms: boolean;
+  data: boolean;
+  fecha?: string;
+  terminos?: boolean;
+  datos?: boolean;
 }
 
-/** Guarda y consulta el consentimiento informado del usuario. */
+export type Consentimiento = Consent;
+
+/** Stores and queries user informed consent. */
 @Injectable({ providedIn: 'root' })
-export class ConsentimientoService {
-  private readonly almacenamiento = inject(AlmacenamientoService);
+export class ConsentService {
+  private readonly storage = inject(StorageService);
 
-  async guardar(consentimiento: Omit<Consentimiento, 'version'>): Promise<Consentimiento> {
-    const registro: Consentimiento = { version: TERMINOS_VERSION, ...consentimiento };
-    await this.almacenamiento.guardar(ClavesAlmacenamiento.consentimiento, registro);
-    return registro;
+  async save(consent: Omit<Consent, 'version'>): Promise<Consent> {
+    const record: Consent = {
+      version: TERMS_VERSION,
+      date: consent.date ?? consent.fecha ?? new Date().toISOString(),
+      terms: consent.terms ?? consent.terminos ?? false,
+      data: consent.data ?? consent.datos ?? false,
+      fecha: consent.date ?? consent.fecha ?? new Date().toISOString(),
+      terminos: consent.terms ?? consent.terminos ?? false,
+      datos: consent.data ?? consent.datos ?? false,
+    };
+    await this.storage.set(StorageKeys.consent, record);
+    return record;
   }
 
-  async actual(): Promise<Consentimiento | null> {
-    return this.almacenamiento.leer<Consentimiento | null>(ClavesAlmacenamiento.consentimiento, null);
+  async getCurrent(): Promise<Consent | null> {
+    return this.storage.get<Consent | null>(StorageKeys.consent, null);
   }
 
-  /** La versión aceptada sigue siendo la vigente y cubre ambos documentos. */
+  async isCurrent(): Promise<boolean> {
+    const consent = await this.getCurrent();
+    const isTermsOk = consent?.terms ?? consent?.terminos ?? false;
+    const isDataOk = consent?.data ?? consent?.datos ?? false;
+    return consent?.version === TERMS_VERSION && isTermsOk && isDataOk;
+  }
+
+  async guardar(consentimiento: Omit<Consent, 'version'>): Promise<Consent> {
+    return this.save(consentimiento);
+  }
+
+  async actual(): Promise<Consent | null> {
+    return this.getCurrent();
+  }
+
   async estaVigente(): Promise<boolean> {
-    const consentimiento = await this.actual();
-    return consentimiento?.version === TERMINOS_VERSION && consentimiento.terminos && consentimiento.datos;
+    return this.isCurrent();
   }
 }

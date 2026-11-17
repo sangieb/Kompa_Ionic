@@ -1,12 +1,14 @@
-/** Claves únicas para todo lo que se guarda en el almacenamiento local. */
-export const ClavesAlmacenamiento = {
-  perfil: 'perfil',
-  cuentas: 'cuentas',
-  sesion: 'sesion',
-  actividades: 'actividades',
-  publicaciones: 'publicaciones',
-  consentimiento: 'consentimiento',
-  ubicacionSolicitada: 'ubicacionSolicitada',
+/** Unique keys for everything stored in local storage. */
+export const StorageKeys = {
+  profile: 'perfil',
+  accounts: 'cuentas',
+  session: 'sesion',
+  activities: 'actividades',
+  posts: 'publicaciones',
+  consent: 'consentimiento',
+  locationRequested: 'ubicacionSolicitada',
 } as const;
 
-export type ClaveAlmacenamiento = (typeof ClavesAlmacenamiento)[keyof typeof ClavesAlmacenamiento];
+export type StorageKey = (typeof StorageKeys)[keyof typeof StorageKeys];
+
+export type ClaveAlmacenamiento = StorageKey;

@@ -21,49 +21,53 @@ import { addIcons } from 'ionicons';
 import { camera, imageOutline, images, locateOutline, search } from 'ionicons/icons';
 import * as L from 'leaflet';
 
-import { FotoOpcionesService } from '../../../core/foto/foto-opciones.service';
-import { FotoService } from '../../../core/foto/foto.service';
-import { MensajeService } from '../../../core/mensaje/mensaje.service';
-import { PerfilService } from '../../../core/perfil/perfil.service';
-import type { EstadoPermisoUi } from '../../../core/permisos/permisos.service';
-import { PermisosService } from '../../../core/permisos/permisos.service';
-import type { Coordenada, ResultadoUbicacion } from '../../../core/ubicacion/ubicacion.service';
-import { UbicacionService } from '../../../core/ubicacion/ubicacion.service';
-import { AvisoPermisoComponent } from '../../../shared/components/aviso-permiso/aviso-permiso.component';
-import { fechaHoraLocalAhora } from '../../../shared/utils/fechas';
-import { primerMensajeError } from '../../../shared/utils/formularios';
-import type { ReglaMensaje } from '../../../shared/utils/formularios';
-import { comprimirFoto } from '../../../shared/utils/foto';
-import { crearIconoMarcador, crearMapa } from '../../../shared/utils/mapa';
-import { codigoPais } from '../../../shared/utils/pais-por-nacionalidad';
-import { enteroPositivo, fechaFutura, longitudMinima, requeridoConContenido } from '../../../shared/utils/validadores';
-import { ActividadService } from '../actividad.service';
-import { GeocodificacionService } from '../geocodificacion.service';
-import { ORIGEN_LOCAL } from '../models/actividad.model';
+import type { Coordinate, LocationResult } from '../../../core/location/location.service';
+import { LocationService } from '../../../core/location/location.service';
+import { MessageService } from '../../../core/message/message.service';
+import type { PermissionUiState } from '../../../core/permissions/permissions.service';
+import { PermissionsService } from '../../../core/permissions/permissions.service';
+import { PhotoOptionsService } from '../../../core/photo/photo-options.service';
+import { PhotoService } from '../../../core/photo/photo.service';
+import { ProfileService } from '../../../core/profile/profile.service';
+import { PermissionNoticeComponent } from '../../../shared/components/permission-notice/permission-notice.component';
+import { countryCode } from '../../../shared/utils/country-by-nationality';
+import { localDateTimeNow } from '../../../shared/utils/dates';
+import { firstErrorMessage } from '../../../shared/utils/forms';
+import type { MessageRule } from '../../../shared/utils/forms';
+import { createMarkerIcon, createMap } from '../../../shared/utils/map';
+import { compressPhoto } from '../../../shared/utils/photo';
+import { futureDate, minLength, positiveInteger, requiredWithContent } from '../../../shared/utils/validators';
+import { ActivityService } from '../activity.service';
+import { GeocodingService } from '../geocoding.service';
+import { LOCAL_SOURCE } from '../models/activity.model';
 
-/** Validaciones de la nueva actividad, en el mismo orden que guardarActividad() en Kotlin. */
-const ERRORES_ACTIVIDAD: ReglaMensaje[] = [
-  { control: 'nombre', error: 'requerido', mensaje: 'Escribe el nombre de la actividad' },
-  { control: 'nombre', error: 'longitudMinima', mensaje: 'El nombre debe tener al menos 2 caracteres' },
-  { control: '', error: 'ubicacionRequerida', mensaje: 'Toca el mapa para fijar la ubicación de la actividad' },
-  { control: 'descripcion', error: 'longitudMinima', mensaje: 'Escribe una descripción de al menos 10 caracteres' },
-  { control: 'duracionTexto', error: 'enteroPositivo', mensaje: 'Escribe una duración válida en minutos' },
-  { control: 'fechaTexto', error: 'requerido', mensaje: 'Selecciona la fecha y hora de la actividad' },
-  { control: 'fechaTexto', error: 'fechaFutura', mensaje: 'La fecha de la actividad debe ser futura' },
+const ACTIVITY_ERRORS: MessageRule[] = [
+  { control: 'nombre', error: 'required', message: 'Escribe el nombre de la actividad' },
+  { control: 'nombre', error: 'requerido', message: 'Escribe el nombre de la actividad' },
+  { control: 'nombre', error: 'minLength', message: 'El nombre debe tener al menos 2 caracteres' },
+  { control: 'nombre', error: 'longitudMinima', message: 'El nombre debe tener al menos 2 caracteres' },
+  { control: '', error: 'ubicacionRequerida', message: 'Toca el mapa para fijar la ubicación de la actividad' },
+  { control: '', error: 'locationRequired', message: 'Toca el mapa para fijar la ubicación de la actividad' },
+  { control: 'descripcion', error: 'minLength', message: 'Escribe una descripción de al menos 10 caracteres' },
+  { control: 'descripcion', error: 'longitudMinima', message: 'Escribe una descripción de al menos 10 caracteres' },
+  { control: 'duracionTexto', error: 'positiveInteger', message: 'Escribe una duración válida en minutos' },
+  { control: 'duracionTexto', error: 'enteroPositivo', message: 'Escribe una duración válida en minutos' },
+  { control: 'fechaTexto', error: 'required', message: 'Selecciona la fecha y hora de la actividad' },
+  { control: 'fechaTexto', error: 'requerido', message: 'Selecciona la fecha y hora de la actividad' },
+  { control: 'fechaTexto', error: 'futureDate', message: 'La fecha de la actividad debe ser futura' },
+  { control: 'fechaTexto', error: 'fechaFutura', message: 'La fecha de la actividad debe ser futura' },
 ];
 
-/** La ubicación solo es válida si el mapa fijó latitud y longitud. */
-const ubicacionRequerida: ValidatorFn = (control) => {
+const locationRequired: ValidatorFn = (control) => {
   const lat = control.get('latitud')?.value;
   const lon = control.get('longitud')?.value;
-  return lat !== null && lon !== null ? null : { ubicacionRequerida: true };
+  return lat !== null && lon !== null ? null : { locationRequired: true, ubicacionRequerida: true };
 };
 
-/** Equivale a ui/nueva/NuevaActividadActivity.kt */
 @Component({
-  selector: 'app-nueva-actividad',
-  templateUrl: './nueva-actividad.page.html',
-  styleUrls: ['./nueva-actividad.page.scss'],
+  selector: 'app-new-activity, app-nueva-actividad',
+  templateUrl: './new-activity.page.html',
+  styleUrls: ['./new-activity.page.scss'],
   imports: [
     IonHeader,
     IonToolbar,
@@ -76,60 +80,77 @@ const ubicacionRequerida: ValidatorFn = (control) => {
     IonButton,
     IonIcon,
     ReactiveFormsModule,
-    AvisoPermisoComponent,
+    PermissionNoticeComponent,
   ],
 })
-export class NuevaActividadPage implements OnDestroy {
-  @ViewChild('mapa', { static: true }) contenedorMapa!: ElementRef<HTMLDivElement>;
+export class NewActivityPage implements OnDestroy {
+  @ViewChild('mapa', { static: true }) mapContainer!: ElementRef<HTMLDivElement>;
+  get contenedorMapa(): ElementRef<HTMLDivElement> {
+    return this.mapContainer;
+  }
 
-  readonly fechaMinima = fechaHoraLocalAhora();
+  readonly minDate = localDateTimeNow();
+  readonly fechaMinima = this.minDate;
 
-  readonly formulario = new FormGroup(
+  readonly form = new FormGroup(
     {
       nombre: new FormControl<string>('', {
         nonNullable: true,
-        validators: [requeridoConContenido, longitudMinima(2)],
+        validators: [requiredWithContent, minLength(2)],
       }),
-      descripcion: new FormControl<string>('', { nonNullable: true, validators: [longitudMinima(10)] }),
-      duracionTexto: new FormControl<string>('', { nonNullable: true, validators: [enteroPositivo] }),
-      fechaTexto: new FormControl<string>('', { nonNullable: true, validators: [requeridoConContenido, fechaFutura] }),
+      descripcion: new FormControl<string>('', { nonNullable: true, validators: [minLength(10)] }),
+      duracionTexto: new FormControl<string>('', { nonNullable: true, validators: [positiveInteger] }),
+      fechaTexto: new FormControl<string>('', { nonNullable: true, validators: [requiredWithContent, futureDate] }),
       ubicacionTexto: new FormControl<string>('', { nonNullable: true }),
       latitud: new FormControl<number | null>(null),
       longitud: new FormControl<number | null>(null),
     },
-    { validators: [ubicacionRequerida] },
+    { validators: [locationRequired] },
   );
+  readonly formulario = this.form;
 
-  readonly fotoUri = signal<string | null>(null); // webPath para la vista previa
-  readonly guardando = signal(false);
-  readonly buscando = signal(false);
-  readonly estadoUbicacion = signal<EstadoPermisoUi>('prompt');
-  readonly solicitandoUbicacion = signal(false);
-  readonly avisoUbicacionDescartado = signal(false);
+  readonly photoUri = signal<string | null>(null);
+  readonly fotoUri = this.photoUri;
 
-  /** Solo se muestra un aviso cuando el permiso está bloqueado o no se puede consultar. */
-  readonly mostrarAvisoUbicacion = computed(
+  readonly saving = signal(false);
+  readonly guardando = this.saving;
+
+  readonly searching = signal(false);
+  readonly buscando = this.searching;
+
+  readonly locationState = signal<PermissionUiState>('prompt');
+  readonly estadoUbicacion = this.locationState;
+
+  readonly requestingLocation = signal(false);
+  readonly solicitandoUbicacion = this.requestingLocation;
+
+  readonly locationWarningDismissed = signal(false);
+  readonly avisoUbicacionDescartado = this.locationWarningDismissed;
+
+  readonly showLocationWarning = computed(
     () =>
-      !this.avisoUbicacionDescartado() &&
-      (this.estadoUbicacion() === 'denied' ||
-        this.estadoUbicacion() === 'servicios-apagados' ||
-        this.estadoUbicacion() === 'unavailable'),
+      !this.locationWarningDismissed() &&
+      (this.locationState() === 'denied' ||
+        this.locationState() === 'services-off' ||
+        this.locationState() === 'servicios-apagados' ||
+        this.locationState() === 'unavailable'),
   );
+  readonly mostrarAvisoUbicacion = this.showLocationWarning;
 
-  private posicionDispositivo: Coordenada | null = null;
-  private mapa?: L.Map;
-  private marcador?: L.Marker;
-  private reanudacion?: PluginListenerHandle;
-  private revisando = false;
+  private devicePosition: Coordinate | null = null;
+  private map?: L.Map;
+  private marker?: L.Marker;
+  private resumeListener?: PluginListenerHandle;
+  private isChecking = false;
 
-  private readonly actividades = inject(ActividadService);
-  private readonly geo = inject(GeocodificacionService);
-  private readonly perfilService = inject(PerfilService);
-  private readonly mensajes = inject(MensajeService);
-  private readonly permisos = inject(PermisosService);
-  private readonly opciones = inject(FotoOpcionesService);
-  private readonly ubicacion = inject(UbicacionService);
-  private readonly fotos = inject(FotoService);
+  private readonly activityService = inject(ActivityService);
+  private readonly geocodingService = inject(GeocodingService);
+  private readonly profileService = inject(ProfileService);
+  private readonly messageService = inject(MessageService);
+  private readonly permissionsService = inject(PermissionsService);
+  private readonly photoOptionsService = inject(PhotoOptionsService);
+  private readonly locationService = inject(LocationService);
+  private readonly photoService = inject(PhotoService);
   private readonly navCtrl = inject(NavController);
 
   constructor() {
@@ -137,245 +158,284 @@ export class NuevaActividadPage implements OnDestroy {
   }
 
   async ionViewDidEnter(): Promise<void> {
-    if (!this.mapa) {
-      this.mapa = crearMapa(this.contenedorMapa.nativeElement, { zoom: 15 });
-      // Igual que singleTapConfirmedHelper(): tocar el mapa fija la ubicación
-      this.mapa.on('click', (e: L.LeafletMouseEvent) => this.alTocarMapa(e.latlng.lat, e.latlng.lng));
-      await this.actualizarEstadoUbicacion(true);
+    if (!this.map) {
+      this.map = createMap(this.mapContainer.nativeElement, { zoom: 15 });
+      this.map.on('click', (e: L.LeafletMouseEvent) => this.onMapTap(e.latlng.lat, e.latlng.lng));
+      await this.updateLocationStatus(true);
     }
-    this.mapa.invalidateSize();
-    await this.escucharReanudacion();
+    this.map.invalidateSize();
+    await this.listenForResume();
   }
 
   ngOnDestroy(): void {
-    void this.reanudacion?.remove();
-    this.mapa?.remove();
+    void this.resumeListener?.remove();
+    this.map?.remove();
   }
 
-  // ---------- Foto: taller 4.3 ----------
+  async takePhoto(): Promise<void> {
+    await this.acquirePhoto('camera');
+  }
 
   async tomarFotografia(): Promise<void> {
-    await this.obtenerFoto('camara');
+    return this.takePhoto();
+  }
+
+  async pickFromGallery(): Promise<void> {
+    await this.acquirePhoto('gallery');
   }
 
   async elegirDeGaleria(): Promise<void> {
-    await this.obtenerFoto('galeria');
+    return this.pickFromGallery();
   }
 
-  /** Abre el selector cámara/galería y delega en obtenerFoto con el origen elegido. */
+  async pickPhoto(): Promise<void> {
+    const source = await this.photoOptionsService.selectSource();
+    if (!source) return;
+    await this.acquirePhoto(source);
+  }
+
   async elegirFoto(): Promise<void> {
-    const fuente = await this.opciones.elegirFuente();
-    if (!fuente) return;
-    await this.obtenerFoto(fuente);
+    return this.pickPhoto();
   }
 
-  private async obtenerFoto(desde: 'camara' | 'galeria'): Promise<void> {
-    const permitido = await (desde === 'camara' ? this.permisos.asegurarCamara() : this.permisos.asegurarGaleria());
-    if (!permitido) return;
+  private async acquirePhoto(source: 'camera' | 'gallery'): Promise<void> {
+    const allowed =
+      source === 'camera'
+        ? await this.permissionsService.ensureCamera()
+        : await this.permissionsService.ensureGallery();
+    if (!allowed) return;
 
-    const { foto, error } = desde === 'camara' ? await this.fotos.tomarFoto() : await this.fotos.elegirDeGaleria();
+    const { photo, error } =
+      source === 'camera' ? await this.photoService.takePhoto() : await this.photoService.pickFromGallery();
+
     if (error) {
-      await this.mensajes.mostrar(error);
+      await this.messageService.show(error);
       return;
     }
-    this.fotoUri.set(foto); // null si el usuario canceló
+    this.photoUri.set(photo);
   }
 
-  // ---------- Mapa y ubicación ----------
+  async useMyLocation(): Promise<void> {
+    if (this.requestingLocation()) return;
+    this.requestingLocation.set(true);
+    const result = await this.locationService.getCurrentPosition();
+    this.requestingLocation.set(false);
+    await this.applyLocation(result, true);
+  }
 
-  /** Acción explícita: pide el permiso y centra el mapa si se concede. */
   async usarMiUbicacion(): Promise<void> {
-    if (this.solicitandoUbicacion()) return;
-    this.solicitandoUbicacion.set(true);
-    const resultado = await this.ubicacion.obtenerPosicion();
-    this.solicitandoUbicacion.set(false);
-    await this.aplicarUbicacion(resultado, true);
+    return this.useMyLocation();
+  }
+
+  onLocationWarningAction(): void {
+    const state = this.locationState();
+    if (state === 'denied') {
+      void this.permissionsService.openAppSettings();
+      return;
+    }
+    if (state === 'services-off' || state === 'servicios-apagados') {
+      void this.permissionsService.openLocationSettings();
+      return;
+    }
+    void this.useMyLocation();
   }
 
   alAccionAvisoUbicacion(): void {
-    const estado = this.estadoUbicacion();
-    if (estado === 'denied') {
-      void this.permisos.abrirAjustesApp();
-      return;
-    }
-    if (estado === 'servicios-apagados') {
-      void this.permisos.abrirAjustesUbicacion();
-      return;
-    }
-    void this.usarMiUbicacion();
+    this.onLocationWarningAction();
   }
 
-  get accionAvisoUbicacion(): string {
-    const estado = this.estadoUbicacion();
-    if (estado === 'denied') return 'Abrir ajustes';
-    if (estado === 'servicios-apagados') return 'Ajustes de ubicación';
+  get locationWarningAction(): string {
+    const state = this.locationState();
+    if (state === 'denied') return 'Abrir ajustes';
+    if (state === 'services-off' || state === 'servicios-apagados') return 'Ajustes de ubicación';
     return 'Reintentar';
   }
 
+  get accionAvisoUbicacion(): string {
+    return this.locationWarningAction;
+  }
+
+  dismissLocationWarning(): void {
+    this.locationWarningDismissed.set(true);
+  }
+
   descartarAvisoUbicacion(): void {
-    this.avisoUbicacionDescartado.set(true);
+    this.dismissLocationWarning();
   }
 
-  private async actualizarEstadoUbicacion(centrar: boolean): Promise<void> {
-    const estado = await this.permisos.estadoUbicacion();
-    this.estadoUbicacion.set(estado);
-    // Sin permiso no se insiste: la actividad se puede ubicar tocando el mapa.
-    if (estado !== 'granted' || !centrar) return;
-    await this.aplicarUbicacion(await this.ubicacion.obtenerPosicion(), false);
+  private async updateLocationStatus(center: boolean): Promise<void> {
+    const state = await this.permissionsService.locationStatus();
+    this.locationState.set(state);
+    if (state !== 'granted' || !center) return;
+    await this.applyLocation(await this.locationService.getCurrentPosition(), false);
   }
 
-  private async aplicarUbicacion(resultado: ResultadoUbicacion, avisar: boolean): Promise<void> {
-    if (resultado.estado === 'ok') {
-      this.estadoUbicacion.set('granted');
-      this.avisoUbicacionDescartado.set(false);
-      this.posicionDispositivo = resultado.coordenada;
-      this.mapa?.flyTo([resultado.coordenada.lat, resultado.coordenada.lon], 15);
+  private async applyLocation(result: LocationResult, notify: boolean): Promise<void> {
+    const isOk = 'state' in result ? result.state === 'ok' : result.estado === 'ok';
+    const coord =
+      ('coordinate' in result ? result.coordinate : undefined) ??
+      ('coordenada' in result ? result.coordenada : undefined);
+
+    if (isOk && coord) {
+      this.locationState.set('granted');
+      this.locationWarningDismissed.set(false);
+      this.devicePosition = coord;
+      this.map?.flyTo([coord.lat, coord.lon], 15);
       return;
     }
 
-    if (resultado.estado === 'sin-permiso') {
-      this.estadoUbicacion.set(await this.permisos.estadoUbicacion());
-      this.avisoUbicacionDescartado.set(false);
-      if (avisar) {
-        await this.mensajes.mostrar('Sin permiso de ubicación. Puedes tocar el mapa para fijar la actividad.');
+    const isNoPerm = 'state' in result ? result.state === 'no-permission' : result.estado === 'sin-permiso';
+    if (isNoPerm) {
+      this.locationState.set(await this.permissionsService.locationStatus());
+      this.locationWarningDismissed.set(false);
+      if (notify) {
+        await this.messageService.show('Sin permiso de ubicación. Puedes tocar el mapa para fijar la actividad.');
       }
       return;
     }
 
-    if (resultado.estado === 'servicios-apagados') {
-      this.estadoUbicacion.set('servicios-apagados');
-      this.avisoUbicacionDescartado.set(false);
-      if (avisar) {
-        await this.mensajes.mostrar('Activa la ubicación del teléfono o toca el mapa para fijar la actividad.');
+    const isOff = 'state' in result ? result.state === 'services-off' : result.estado === 'servicios-apagados';
+    if (isOff) {
+      this.locationState.set('servicios-apagados');
+      this.locationWarningDismissed.set(false);
+      if (notify) {
+        await this.messageService.show('Activa la ubicación del teléfono o toca el mapa para fijar la actividad.');
       }
       return;
     }
 
-    if (avisar) {
-      const mensaje =
-        resultado.motivo === 'tiempo'
+    if (notify) {
+      const reason =
+        ('reason' in result ? result.reason : undefined) ?? ('motivo' in result ? result.motivo : undefined);
+      const message =
+        reason === 'timeout' || reason === 'tiempo'
           ? 'La búsqueda de ubicación tardó demasiado. Toca el mapa para fijarla.'
-          : resultado.motivo === 'precision'
+          : reason === 'accuracy' || reason === 'precision'
             ? 'No obtuvimos una ubicación precisa. Toca el mapa para fijarla.'
             : 'No pudimos obtener tu ubicación. Revisa el GPS o toca el mapa para fijarla.';
-      await this.mensajes.mostrar(mensaje);
+      await this.messageService.show(message);
     }
   }
 
-  private async escucharReanudacion(): Promise<void> {
-    if (this.reanudacion) return;
+  private async listenForResume(): Promise<void> {
+    if (this.resumeListener) return;
     try {
-      this.reanudacion = await App.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) void this.revisarAlVolver();
+      this.resumeListener = await App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) void this.checkOnReturn();
       });
     } catch (error) {
-      console.warn('No se pudo escuchar la reanudación de la app', error);
+      console.warn('Could not listen for app resume', error);
     }
   }
 
-  /** Revalida permisos al volver de Ajustes sin abrir diálogos. */
-  private async revisarAlVolver(): Promise<void> {
-    if (this.revisando) return;
-    this.revisando = true;
+  private async checkOnReturn(): Promise<void> {
+    if (this.isChecking) return;
+    this.isChecking = true;
     try {
-      const anterior = this.estadoUbicacion();
-      const estado = await this.permisos.estadoUbicacion();
-      this.estadoUbicacion.set(estado);
-      if (estado !== 'granted' || anterior === 'granted') return;
-      this.avisoUbicacionDescartado.set(false);
-      await this.aplicarUbicacion(await this.ubicacion.obtenerPosicion(), false);
+      const prev = this.locationState();
+      const current = await this.permissionsService.locationStatus();
+      this.locationState.set(current);
+      if (current !== 'granted' || prev === 'granted') return;
+      this.locationWarningDismissed.set(false);
+      await this.applyLocation(await this.locationService.getCurrentPosition(), false);
     } finally {
-      this.revisando = false;
+      this.isChecking = false;
     }
   }
 
-  private async alTocarMapa(lat: number, lon: number): Promise<void> {
-    this.fijarUbicacion(lat, lon);
-    const nombre = await this.geo.nombreUbicacion(lat, lon);
-    this.formulario.controls.ubicacionTexto.setValue(nombre || 'Ubicación seleccionada (sin nombre)');
+  private async onMapTap(lat: number, lon: number): Promise<void> {
+    this.setLocation(lat, lon);
+    const name = await this.geocodingService.getLocationName(lat, lon);
+    this.form.controls.ubicacionTexto.setValue(name || 'Ubicación seleccionada (sin nombre)');
   }
 
-  private fijarUbicacion(lat: number, lon: number): void {
-    this.formulario.controls.latitud.setValue(lat);
-    this.formulario.controls.longitud.setValue(lon);
-    this.marcador?.remove();
-    if (this.mapa) {
-      this.marcador = L.marker([lat, lon], { icon: crearIconoMarcador('local') }).addTo(this.mapa);
+  private setLocation(lat: number, lon: number): void {
+    this.form.controls.latitud.setValue(lat);
+    this.form.controls.longitud.setValue(lon);
+    this.marker?.remove();
+    if (this.map) {
+      this.marker = L.marker([lat, lon], { icon: createMarkerIcon('local') }).addTo(this.map);
     }
   }
 
-  /** Igual que buscarDireccion(): cerca del dispositivo o en el país de la nacionalidad */
-  async buscarDireccion(): Promise<void> {
-    const texto = this.formulario.controls.ubicacionTexto.value.trim();
-    if (!texto) {
-      await this.mensajes.mostrar('Escribe una dirección para buscarla');
+  async searchAddress(): Promise<void> {
+    const text = this.form.controls.ubicacionTexto.value.trim();
+    if (!text) {
+      await this.messageService.show('Escribe una dirección para buscarla');
       return;
     }
-    (document.activeElement as HTMLElement | null)?.blur(); // ocultarTeclado()
+    (document.activeElement as HTMLElement | null)?.blur();
 
     let viewbox: string | undefined;
-    let paises: string | undefined;
-    if (this.posicionDispositivo) {
+    let countries: string | undefined;
+    if (this.devicePosition) {
       const m = 0.5;
-      const { lat, lon } = this.posicionDispositivo;
+      const { lat, lon } = this.devicePosition;
       viewbox = `${lon - m},${lat - m},${lon + m},${lat + m}`;
     } else {
-      paises = codigoPais(await this.perfilService.nacionalidad()) ?? undefined;
+      countries = countryCode(await this.profileService.getNationality()) ?? undefined;
     }
 
-    this.buscando.set(true);
-    const resultado = await this.geo.buscarDireccion(texto, viewbox, paises);
-    this.buscando.set(false);
+    this.searching.set(true);
+    const result = await this.geocodingService.searchAddress(text, viewbox, countries);
+    this.searching.set(false);
 
-    const lat = Number(resultado?.lat);
-    const lon = Number(resultado?.lon);
-    if (resultado && !isNaN(lat) && !isNaN(lon)) {
-      this.fijarUbicacion(lat, lon);
-      this.mapa?.flyTo([lat, lon], 16);
-      this.formulario.controls.ubicacionTexto.setValue(resultado.display_name ?? texto);
+    const lat = Number(result?.lat);
+    const lon = Number(result?.lon);
+    if (result && !isNaN(lat) && !isNaN(lon)) {
+      this.setLocation(lat, lon);
+      this.map?.flyTo([lat, lon], 16);
+      this.form.controls.ubicacionTexto.setValue(result.display_name ?? text);
     } else {
-      await this.mensajes.mostrar('No se encontró la dirección');
+      await this.messageService.show('No se encontró la dirección');
     }
   }
 
-  // ---------- Guardar ----------
+  async buscarDireccion(): Promise<void> {
+    return this.searchAddress();
+  }
 
-  async guardar(): Promise<void> {
-    if (this.guardando()) return;
+  async save(): Promise<void> {
+    if (this.saving()) return;
 
-    const error = primerMensajeError(this.formulario, ERRORES_ACTIVIDAD);
+    const error = firstErrorMessage(this.form, ACTIVITY_ERRORS);
     if (error) {
-      await this.mensajes.mostrar(error);
+      await this.messageService.show(error);
       return;
     }
 
-    this.guardando.set(true);
+    this.saving.set(true);
     try {
-      const datos = this.formulario.getRawValue();
-      const foto = this.fotoUri();
-      const fotoRuta = foto ? await comprimirFoto(foto) : null;
-      const perfil = await this.perfilService.perfilActual();
-      const fecha = new Date(datos.fechaTexto).getTime();
+      const data = this.form.getRawValue();
+      const photo = this.photoUri();
+      const photoPath = photo ? await compressPhoto(photo) : null;
+      const profile = await this.profileService.getCurrentProfile();
+      const date = new Date(data.fechaTexto).getTime();
+      const duration = data.duracionTexto.trim() ? Number(data.duracionTexto.trim()) : null;
 
-      await this.actividades.guardarNueva({
+      await this.activityService.saveNew({
         id: crypto.randomUUID(),
-        nombre: datos.nombre.trim(),
-        descripcion: datos.descripcion.trim(),
-        ubicacion: this.formulario.controls.ubicacionTexto.value,
-        lat: datos.latitud!,
-        lon: datos.longitud!,
-        creadoPor: perfil?.nombre?.trim() || 'Tú',
-        duracionMin: Number(datos.duracionTexto.trim()),
-        fechaCreacion: Date.now(),
-        fechaActividad: fecha,
-        fotoRuta,
-        origen: ORIGEN_LOCAL,
+        name: data.nombre.trim(),
+        description: data.descripcion.trim(),
+        location: this.form.controls.ubicacionTexto.value,
+        lat: data.latitud ?? 0,
+        lon: data.longitud ?? 0,
+        createdBy: profile?.name?.trim() || 'Tú',
+        durationMin: Number.isNaN(duration) ? null : duration,
+        createdAt: Date.now(),
+        activityDate: date,
+        photoPath,
+        source: LOCAL_SOURCE,
       });
 
-      await this.mensajes.mostrar('Actividad guardada');
-      this.navCtrl.back(); // finish(): vuelve al mapa, que recarga los marcadores
+      await this.messageService.show('Actividad guardada');
+      this.navCtrl.back();
     } finally {
-      this.guardando.set(false);
+      this.saving.set(false);
     }
+  }
+
+  async guardar(): Promise<void> {
+    return this.save();
   }
 }

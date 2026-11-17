@@ -1,23 +1,36 @@
-/** Origen de una actividad: creada en el dispositivo o traída de una API. */
-export type OrigenActividad = 'local' | 'api';
+/** Origin of an activity: created locally on the device or fetched from an API. */
+export type ActivitySource = 'local' | 'api';
+export type OrigenActividad = ActivitySource;
 
-/** Actividades creadas por el usuario en este dispositivo. */
-export const ORIGEN_LOCAL: OrigenActividad = 'local';
+/** Activities created by the user on this device. */
+export const LOCAL_SOURCE: ActivitySource = 'local';
+export const ORIGEN_LOCAL: ActivitySource = 'local';
 
-export interface Actividad {
+export interface Activity {
   id: string;
-  nombre: string;
-  descripcion: string;
-  ubicacion: string;
+  name: string;
+  description: string;
+  location: string;
   lat: number;
   lon: number;
-  creadoPor: string;
-  duracionMin: number | null;
-  /** Milisegundos de cuando se creó. */
-  fechaCreacion: number | null;
-  /** Milisegundos de cuando ocurrirá la actividad. */
-  fechaActividad: number | null;
-  /** Foto comprimida como data URL, o null. */
-  fotoRuta: string | null;
-  origen: OrigenActividad;
+  createdBy: string;
+  durationMin: number | null;
+  /** Milliseconds when created. */
+  createdAt: number | null;
+  /** Milliseconds when activity takes place. */
+  activityDate: number | null;
+  /** Compressed photo data URL or null. */
+  photoPath: string | null;
+  source: ActivitySource;
+
+  nombre?: string;
+  descripcion?: string;
+  ubicacion?: string;
+  creadoPor?: string;
+  fechaCreacion?: number | null;
+  fechaActividad?: number | null;
+  fotoRuta?: string | null;
+  origen?: ActivitySource;
 }
+
+export type Actividad = Activity;

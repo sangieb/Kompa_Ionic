@@ -1,6 +1,8 @@
-// La contraseña nunca se guarda: solo su sal y su hash.
-export interface Cuenta {
-  correo: string;
-  sal: string;
+/** Stored account information with salt and hashed password. */
+export interface Account {
+  email: string;
+  salt: string;
   hash: string;
+  correo?: string;
+  sal?: string;
 }

@@ -21,29 +21,25 @@ import { addIcons } from 'ionicons';
 import { cameraOutline, locationOutline, shieldCheckmarkOutline } from 'ionicons/icons';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { FotoOpcionesService } from '../../../core/foto/foto-opciones.service';
-import { FotoService } from '../../../core/foto/foto.service';
-import { MensajeService } from '../../../core/mensaje/mensaje.service';
-import type { Perfil } from '../../../core/perfil/perfil.model';
-import { PerfilService } from '../../../core/perfil/perfil.service';
-import type { EstadoPermisoUi } from '../../../core/permisos/permisos.service';
-import { PermisosService } from '../../../core/permisos/permisos.service';
-import type { Consentimiento } from '../../../core/privacidad/consentimiento.service';
-import { ConsentimientoService } from '../../../core/privacidad/consentimiento.service';
-import { DatosUsuarioService } from '../../../core/privacidad/datos-usuario.service';
-import { PerfilResumenComponent } from '../../../shared/components/perfil-resumen/perfil-resumen.component';
-import { TerminosModalComponent } from '../../../shared/components/terminos-modal/terminos-modal.component';
-import { formatearFecha } from '../../../shared/utils/fechas';
-import { comprimirFoto } from '../../../shared/utils/foto';
+import { MessageService } from '../../../core/message/message.service';
+import type { PermissionUiState } from '../../../core/permissions/permissions.service';
+import { PermissionsService } from '../../../core/permissions/permissions.service';
+import { PhotoOptionsService } from '../../../core/photo/photo-options.service';
+import { PhotoService } from '../../../core/photo/photo.service';
+import type { Consent } from '../../../core/privacy/consent.service';
+import { ConsentService } from '../../../core/privacy/consent.service';
+import { UserDataService } from '../../../core/privacy/user-data.service';
+import type { Profile } from '../../../core/profile/profile.model';
+import { ProfileService } from '../../../core/profile/profile.service';
+import { ProfileSummaryComponent } from '../../../shared/components/profile-summary/profile-summary.component';
+import { TermsModalComponent } from '../../../shared/components/terms-modal/terms-modal.component';
+import { formatDate } from '../../../shared/utils/dates';
+import { compressPhoto } from '../../../shared/utils/photo';
 
-/**
- * Perfil del usuario en modo solo lectura (excepto la foto, que se puede cambiar).
- * Equivale a ui/perfil/PerfilActivity.kt sin el botón de editar.
- */
 @Component({
-  selector: 'app-perfil',
-  templateUrl: './perfil.page.html',
-  styleUrls: ['./perfil.page.scss'],
+  selector: 'app-profile, app-perfil',
+  templateUrl: './profile.page.html',
+  styleUrls: ['./profile.page.scss'],
   imports: [
     IonHeader,
     IonToolbar,
@@ -55,122 +51,174 @@ import { comprimirFoto } from '../../../shared/utils/foto';
     IonSpinner,
     IonIcon,
     IonSkeletonText,
-    PerfilResumenComponent,
-    TerminosModalComponent,
+    ProfileSummaryComponent,
+    TermsModalComponent,
   ],
 })
-export class PerfilPage implements OnDestroy {
-  readonly cargando = signal(true);
-  readonly perfil = signal<Perfil | null>(null);
-  readonly consentimiento = signal<Consentimiento | null>(null);
-  readonly estadoUbicacion = signal<EstadoPermisoUi>('prompt');
-  readonly estadoCamara = signal<EstadoPermisoUi>('prompt');
-  readonly modalTerminosAbierto = signal(false);
+export class ProfilePage implements OnDestroy {
+  readonly loading = signal(true);
+  readonly cargando = this.loading;
 
-  private reanudacion?: PluginListenerHandle;
-  private revisandoPermisos = false;
+  readonly profile = signal<Profile | null>(null);
+  readonly perfil = this.profile;
 
-  private readonly perfilService = inject(PerfilService);
+  readonly consent = signal<Consent | null>(null);
+  readonly consentimiento = this.consent;
+
+  readonly locationState = signal<PermissionUiState>('prompt');
+  readonly estadoUbicacion = this.locationState;
+
+  readonly cameraState = signal<PermissionUiState>('prompt');
+  readonly estadoCamara = this.cameraState;
+
+  readonly termsModalOpen = signal(false);
+  readonly modalTerminosAbierto = this.termsModalOpen;
+
+  private resumeListener?: PluginListenerHandle;
+  private isCheckingPermissions = false;
+
+  private readonly profileService = inject(ProfileService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly navCtrl = inject(NavController);
-  private readonly fotos = inject(FotoService);
-  private readonly permisos = inject(PermisosService);
-  private readonly mensajes = inject(MensajeService);
-  private readonly opciones = inject(FotoOpcionesService);
-  private readonly consentimientos = inject(ConsentimientoService);
-  private readonly datosUsuario = inject(DatosUsuarioService);
-  private readonly alertas = inject(AlertController);
+  private readonly photoService = inject(PhotoService);
+  private readonly permissionsService = inject(PermissionsService);
+  private readonly messageService = inject(MessageService);
+  private readonly photoOptionsService = inject(PhotoOptionsService);
+  private readonly consentService = inject(ConsentService);
+  private readonly userDataService = inject(UserDataService);
+  private readonly alertCtrl = inject(AlertController);
 
   constructor() {
     addIcons({ cameraOutline, locationOutline, shieldCheckmarkOutline });
   }
 
   async ionViewWillEnter(): Promise<void> {
-    await this.cargar();
-    await this.escucharReanudacion();
+    await this.load();
+    await this.listenForResume();
   }
 
   ionViewWillLeave(): void {
-    void this.reanudacion?.remove();
-    this.reanudacion = undefined;
+    void this.resumeListener?.remove();
+    this.resumeListener = undefined;
   }
 
   ngOnDestroy(): void {
-    void this.reanudacion?.remove();
+    void this.resumeListener?.remove();
+  }
+
+  get consentText(): string {
+    const consent = this.consent();
+    if (!consent) return 'Aún no hay registro de aceptación en este dispositivo.';
+    const dateVal = consent.date ?? consent.fecha ?? '';
+    const formatted = formatDate(new Date(dateVal).getTime());
+    return `Aceptaste la versión ${consent.version} el ${formatted}.`;
   }
 
   get consentimientoTexto(): string {
-    const consentimiento = this.consentimiento();
-    if (!consentimiento) return 'Aún no hay registro de aceptación en este dispositivo.';
-    const fecha = formatearFecha(new Date(consentimiento.fecha).getTime());
-    return `Aceptaste la versión ${consentimiento.version} el ${fecha}.`;
+    return this.consentText;
+  }
+
+  get locationStateText(): string {
+    return this.getStateText(this.locationState());
   }
 
   get estadoUbicacionTexto(): string {
-    return this.textoEstado(this.estadoUbicacion());
+    return this.locationStateText;
+  }
+
+  get cameraStateText(): string {
+    return this.getStateText(this.cameraState());
   }
 
   get estadoCamaraTexto(): string {
-    return this.textoEstado(this.estadoCamara());
+    return this.cameraStateText;
+  }
+
+  get locationAction(): string {
+    const state = this.locationState();
+    return state === 'denied' || state === 'services-off' || state === 'servicios-apagados' ? 'Ajustes' : 'Activar';
   }
 
   get accionUbicacion(): string {
-    const estado = this.estadoUbicacion();
-    return estado === 'denied' || estado === 'servicios-apagados' ? 'Ajustes' : 'Activar';
+    return this.locationAction;
+  }
+
+  get cameraAction(): string {
+    return this.cameraState() === 'denied' ? 'Ajustes' : 'Activar';
   }
 
   get accionCamara(): string {
-    return this.estadoCamara() === 'denied' ? 'Ajustes' : 'Activar';
+    return this.cameraAction;
+  }
+
+  goToRegister(): void {
+    void this.router.navigateByUrl('/register');
   }
 
   irARegistro(): void {
-    void this.router.navigateByUrl('/registro');
+    this.goToRegister();
+  }
+
+  openTerms(): void {
+    this.termsModalOpen.set(true);
   }
 
   abrirTerminos(): void {
-    this.modalTerminosAbierto.set(true);
+    this.openTerms();
+  }
+
+  closeTerms(): void {
+    this.termsModalOpen.set(false);
   }
 
   cerrarTerminos(): void {
-    this.modalTerminosAbierto.set(false);
+    this.closeTerms();
+  }
+
+  async manageLocation(): Promise<void> {
+    const state = this.locationState();
+    if (state === 'granted') {
+      await this.messageService.show('La ubicación ya está activa.');
+      return;
+    }
+    if (state === 'services-off' || state === 'servicios-apagados') {
+      await this.permissionsService.openLocationSettings();
+      return;
+    }
+    if (state === 'denied') {
+      await this.permissionsService.openAppSettings();
+      return;
+    }
+    const granted = await this.permissionsService.requestLocation();
+    this.locationState.set(granted ? 'granted' : await this.permissionsService.locationStatus());
+    if (!granted) await this.permissionsService.openAppSettings();
   }
 
   async gestionarUbicacion(): Promise<void> {
-    const estado = this.estadoUbicacion();
-    if (estado === 'granted') {
-      await this.mensajes.mostrar('La ubicación ya está activa.');
+    return this.manageLocation();
+  }
+
+  async manageCamera(): Promise<void> {
+    if (this.cameraState() === 'granted') {
+      await this.messageService.show('La cámara ya está activa.');
       return;
     }
-    if (estado === 'servicios-apagados') {
-      await this.permisos.abrirAjustesUbicacion();
+    if (this.cameraState() === 'denied') {
+      await this.permissionsService.openAppSettings();
       return;
     }
-    if (estado === 'denied') {
-      await this.permisos.abrirAjustesApp();
-      return;
-    }
-    const concedido = await this.permisos.solicitarUbicacion();
-    this.estadoUbicacion.set(concedido ? 'granted' : await this.permisos.estadoUbicacion());
-    if (!concedido) await this.permisos.abrirAjustesApp();
+    const granted = await this.permissionsService.requestCamera();
+    this.cameraState.set(granted ? 'granted' : 'denied');
+    if (!granted) await this.permissionsService.openAppSettings();
   }
 
   async gestionarCamara(): Promise<void> {
-    if (this.estadoCamara() === 'granted') {
-      await this.mensajes.mostrar('La cámara ya está activa.');
-      return;
-    }
-    if (this.estadoCamara() === 'denied') {
-      await this.permisos.abrirAjustesApp();
-      return;
-    }
-    const concedido = await this.permisos.solicitarCamara();
-    this.estadoCamara.set(concedido ? 'granted' : 'denied');
-    if (!concedido) await this.permisos.abrirAjustesApp();
+    return this.manageCamera();
   }
 
-  async cerrarSesion(): Promise<void> {
-    const alerta = await this.alertas.create({
+  async confirmLogout(): Promise<void> {
+    const alert = await this.alertCtrl.create({
       header: 'Cerrar sesión',
       message: '¿Quieres salir de tu cuenta en este dispositivo?',
       buttons: [
@@ -179,16 +227,20 @@ export class PerfilPage implements OnDestroy {
           text: 'Cerrar sesión',
           role: 'destructive',
           handler: () => {
-            void this.salir();
+            void this.signOut();
           },
         },
       ],
     });
-    await alerta.present();
+    await alert.present();
   }
 
-  async eliminarCuenta(): Promise<void> {
-    const alerta = await this.alertas.create({
+  async cerrarSesion(): Promise<void> {
+    return this.confirmLogout();
+  }
+
+  async deleteAccount(): Promise<void> {
+    const alert = await this.alertCtrl.create({
       header: 'Eliminar cuenta y datos',
       message:
         'Se borrarán tu perfil, tu cuenta, tus publicaciones, tus actividades y el consentimiento guardados en este dispositivo. Esta acción no se puede deshacer.',
@@ -198,93 +250,109 @@ export class PerfilPage implements OnDestroy {
           text: 'Eliminar todo',
           role: 'destructive',
           handler: () => {
-            void this.borrarDatos();
+            void this.deleteData();
           },
         },
       ],
     });
-    await alerta.present();
+    await alert.present();
   }
 
-  /** Elige la fuente de la foto (cámara o galería) y actualiza el perfil. */
-  async cambiarFoto(): Promise<void> {
-    const fuente = await this.opciones.elegirFuente();
-    if (!fuente) return;
+  async eliminarCuenta(): Promise<void> {
+    return this.deleteAccount();
+  }
 
-    const permitido = await (fuente === 'camara' ? this.permisos.asegurarCamara() : this.permisos.asegurarGaleria());
-    if (!permitido) return;
+  async changePhoto(): Promise<void> {
+    const source = await this.photoOptionsService.selectSource();
+    if (!source) return;
 
-    const { foto, error } = fuente === 'camara' ? await this.fotos.tomarFoto() : await this.fotos.elegirDeGaleria();
+    const allowed =
+      source === 'camera'
+        ? await this.permissionsService.ensureCamera()
+        : await this.permissionsService.ensureGallery();
+    if (!allowed) return;
+
+    const { photo, error } =
+      source === 'camera' ? await this.photoService.takePhoto() : await this.photoService.pickFromGallery();
     if (error) {
-      await this.mensajes.mostrar(error);
+      await this.messageService.show(error);
       return;
     }
-    if (!foto) return; // el usuario canceló
+    if (!photo) return;
 
-    const actual = this.perfil();
-    if (!actual) return;
-    const actualizado: Perfil = { ...actual, fotoUri: await comprimirFoto(foto, 400, 0.7) };
-    await this.perfilService.guardar(actualizado);
-    this.perfil.set(actualizado);
-    await this.mensajes.mostrar('Foto de perfil actualizada');
+    const current = this.profile();
+    if (!current) return;
+    const updated: Profile = {
+      ...current,
+      photoUri: await compressPhoto(photo, 400, 0.7),
+    };
+    await this.profileService.save(updated);
+    this.profile.set(updated);
+    await this.messageService.show('Foto de perfil actualizada');
   }
 
-  private async escucharReanudacion(): Promise<void> {
-    if (this.reanudacion) return;
+  async cambiarFoto(): Promise<void> {
+    return this.changePhoto();
+  }
+
+  private async listenForResume(): Promise<void> {
+    if (this.resumeListener) return;
     try {
-      this.reanudacion = await App.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) void this.revalidarPermisos();
+      this.resumeListener = await App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) void this.revalidatePermissions();
       });
     } catch (error) {
-      console.warn('No se pudo escuchar la reanudación de la app', error);
+      console.warn('Could not listen for app resume', error);
     }
   }
 
-  /** Al volver de Ajustes se refrescan los permisos sin abrir diálogos. */
-  private async revalidarPermisos(): Promise<void> {
-    if (this.revisandoPermisos) return;
-    this.revisandoPermisos = true;
+  private async revalidatePermissions(): Promise<void> {
+    if (this.isCheckingPermissions) return;
+    this.isCheckingPermissions = true;
     try {
-      const [ubicacion, camara] = await Promise.all([this.permisos.estadoUbicacion(), this.permisos.estadoCamara()]);
-      this.estadoUbicacion.set(ubicacion);
-      this.estadoCamara.set(camara);
+      const [location, camera] = await Promise.all([
+        this.permissionsService.locationStatus(),
+        this.permissionsService.cameraStatus(),
+      ]);
+      this.locationState.set(location);
+      this.cameraState.set(camera);
     } finally {
-      this.revisandoPermisos = false;
+      this.isCheckingPermissions = false;
     }
   }
 
-  private async cargar(): Promise<void> {
-    const [perfil, consentimiento, estadoUbicacion, estadoCamara] = await Promise.all([
-      this.perfilService.perfilActual(),
-      this.consentimientos.actual(),
-      this.permisos.estadoUbicacion(),
-      this.permisos.estadoCamara(),
+  private async load(): Promise<void> {
+    const [profile, consent, locationStatus, cameraStatus] = await Promise.all([
+      this.profileService.getCurrentProfile(),
+      this.consentService.getCurrent(),
+      this.permissionsService.locationStatus(),
+      this.permissionsService.cameraStatus(),
     ]);
-    this.perfil.set(perfil);
-    this.consentimiento.set(consentimiento);
-    this.estadoUbicacion.set(estadoUbicacion);
-    this.estadoCamara.set(estadoCamara);
-    this.cargando.set(false);
+    this.profile.set(profile);
+    this.consent.set(consent);
+    this.locationState.set(locationStatus);
+    this.cameraState.set(cameraStatus);
+    this.loading.set(false);
   }
 
-  private async salir(): Promise<void> {
+  private async signOut(): Promise<void> {
     await this.auth.logout();
-    // navigateRoot borra el historial: equivale a FLAG_ACTIVITY_NEW_TASK | CLEAR_TASK
-    await this.navCtrl.navigateRoot('/inicio');
+    await this.navCtrl.navigateRoot('/welcome');
   }
 
-  private async borrarDatos(): Promise<void> {
-    await this.datosUsuario.eliminarTodo();
-    await this.mensajes.mostrar('Tus datos locales fueron eliminados.');
-    await this.navCtrl.navigateRoot('/inicio');
+  private async deleteData(): Promise<void> {
+    await this.userDataService.deleteAll();
+    await this.messageService.show('Tus datos locales fueron eliminados.');
+    await this.navCtrl.navigateRoot('/welcome');
   }
 
-  private textoEstado(estado: EstadoPermisoUi): string {
-    switch (estado) {
+  private getStateText(state: PermissionUiState): string {
+    switch (state) {
       case 'granted':
         return 'Activa';
       case 'denied':
         return 'Desactivada';
+      case 'services-off':
       case 'servicios-apagados':
         return 'Ubicación del teléfono apagada';
       case 'unavailable':

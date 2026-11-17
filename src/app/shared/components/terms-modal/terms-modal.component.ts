@@ -13,33 +13,45 @@ import {
 import { addIcons } from 'ionicons';
 import { close, shieldCheckmarkOutline } from 'ionicons/icons';
 
-import { RESPONSABLE_DATOS, TERMINOS_FECHA_TEXTO, TERMINOS_VERSION } from '../../../core/privacidad/terminos';
+import { DATA_CONTROLLER, TERMS_DATE_TEXT, TERMS_VERSION } from '../../../core/privacy/terms';
 
 /**
- * Modal informativo con los Términos y Condiciones y la autorización de
- * tratamiento de datos. No marca aceptaciones por sí solo: los checkboxes
- * del registro son los que recogen el consentimiento expreso.
+ * Informational modal with Terms and Conditions and Data Authorization.
  */
 @Component({
-  selector: 'app-terminos-modal',
-  templateUrl: './terminos-modal.component.html',
-  styleUrls: ['./terminos-modal.component.scss'],
+  selector: 'app-terms-modal',
+  templateUrl: './terms-modal.component.html',
+  styleUrls: ['./terms-modal.component.scss'],
   imports: [IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonContent, IonFooter],
 })
-export class TerminosModalComponent {
-  @Input() abierto = false;
+export class TermsModalComponent {
+  @Input() isOpen = false;
 
-  @Output() cerrado = new EventEmitter<void>();
+  @Input() set abierto(v: boolean) {
+    this.isOpen = v;
+  }
+  get abierto(): boolean {
+    return this.isOpen;
+  }
 
-  readonly version = TERMINOS_VERSION;
-  readonly fecha = TERMINOS_FECHA_TEXTO;
-  readonly responsable = RESPONSABLE_DATOS;
+  @Output() dismiss = new EventEmitter<void>();
+  @Output() cerrado = this.dismiss;
+
+  readonly version = TERMS_VERSION;
+  readonly date = TERMS_DATE_TEXT;
+  readonly fecha = TERMS_DATE_TEXT;
+  readonly controller = DATA_CONTROLLER;
+  readonly responsable = DATA_CONTROLLER;
 
   constructor() {
     addIcons({ close, shieldCheckmarkOutline });
   }
 
+  closeModal(): void {
+    this.dismiss.emit();
+  }
+
   cerrar(): void {
-    this.cerrado.emit();
+    this.closeModal();
   }
 }

@@ -4,29 +4,56 @@ import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { chatbubblesOutline, listOutline, mapOutline, personOutline } from 'ionicons/icons';
 
-interface Pestana {
-  ruta: string;
-  etiqueta: string;
-  icono: string;
+export interface Tab {
+  route: string;
+  label: string;
+  icon: string;
+  ruta?: string;
+  etiqueta?: string;
+  icono?: string;
 }
 
+export type Pestana = Tab;
+
 /**
- * Barra de navegación inferior de las pantallas principales.
- * Es un componente aparte para poder reutilizarlo en más páginas.
+ * Bottom navigation bar for primary screens.
  */
 @Component({
-  selector: 'app-barra-inferior',
-  templateUrl: './barra-inferior.component.html',
-  styleUrls: ['./barra-inferior.component.scss'],
+  selector: 'app-bottom-bar',
+  templateUrl: './bottom-bar.component.html',
+  styleUrls: ['./bottom-bar.component.scss'],
   imports: [IonIcon, RouterLink, RouterLinkActive],
 })
-export class BarraInferiorComponent {
-  readonly pestanas: Pestana[] = [
-    { ruta: '/home', etiqueta: 'Mapa', icono: 'map-outline' },
-    { ruta: '/lista', etiqueta: 'Actividades', icono: 'list-outline' },
-    { ruta: '/feed', etiqueta: 'Feed', icono: 'chatbubbles-outline' },
-    { ruta: '/perfil', etiqueta: 'Perfil', icono: 'person-outline' },
+export class BottomBarComponent {
+  readonly tabs: Tab[] = [
+    { route: '/home', label: 'Mapa', icon: 'map-outline', ruta: '/home', etiqueta: 'Mapa', icono: 'map-outline' },
+    {
+      route: '/activities',
+      label: 'Actividades',
+      icon: 'list-outline',
+      ruta: '/activities',
+      etiqueta: 'Actividades',
+      icono: 'list-outline',
+    },
+    {
+      route: '/feed',
+      label: 'Feed',
+      icon: 'chatbubbles-outline',
+      ruta: '/feed',
+      etiqueta: 'Feed',
+      icono: 'chatbubbles-outline',
+    },
+    {
+      route: '/profile',
+      label: 'Perfil',
+      icon: 'person-outline',
+      ruta: '/profile',
+      etiqueta: 'Perfil',
+      icono: 'person-outline',
+    },
   ];
+
+  readonly pestanas = this.tabs;
 
   constructor() {
     addIcons({ mapOutline, listOutline, chatbubblesOutline, personOutline });

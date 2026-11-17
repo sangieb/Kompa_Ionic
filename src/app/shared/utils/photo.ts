@@ -1,17 +1,19 @@
 /**
- * Reduce la foto a máximo `maxLado` px por lado y la devuelve como data URL
- * JPEG, listo para guardar en el almacenamiento (equivale a FotoUtil.kt).
+ * Scales photo to at most `maxSide` px and returns it as a JPEG data URL.
  */
-export async function comprimirFoto(webPath: string, maxLado = 800, calidad = 0.8): Promise<string> {
-  const imagen = new Image();
-  imagen.src = webPath;
-  await imagen.decode();
+export async function compressPhoto(webPath: string, maxSide = 800, quality = 0.8): Promise<string> {
+  const image = new Image();
+  image.src = webPath;
+  await image.decode();
 
-  const escala = Math.min(1, maxLado / Math.max(imagen.naturalWidth, imagen.naturalHeight));
+  const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
   const canvas = document.createElement('canvas');
-  canvas.width = Math.round(imagen.naturalWidth * escala);
-  canvas.height = Math.round(imagen.naturalHeight * escala);
-  canvas.getContext('2d')!.drawImage(imagen, 0, 0, canvas.width, canvas.height);
+  canvas.width = Math.round(image.naturalWidth * scale);
+  canvas.height = Math.round(image.naturalHeight * scale);
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  }
 
-  return canvas.toDataURL('image/jpeg', calidad);
+  return canvas.toDataURL('image/jpeg', quality);
 }

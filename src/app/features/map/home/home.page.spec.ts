@@ -21,7 +21,7 @@ describe('HomePage', () => {
 
   it('muestra la barra inferior con los cuatro destinos', () => {
     const enlaces = Array.from(
-      fixture.nativeElement.querySelectorAll('app-barra-inferior a') as NodeListOf<HTMLAnchorElement>,
+      fixture.nativeElement.querySelectorAll('app-bottom-bar a') as NodeListOf<HTMLAnchorElement>,
     );
 
     expect(enlaces.map((enlace) => enlace.textContent?.trim())).toEqual(['Mapa', 'Actividades', 'Feed', 'Perfil']);

@@ -12,20 +12,22 @@ import {
   IonToolbar,
 } from '@ionic/angular';
 
-import { AuthService, ResultadoLogin } from '../../../core/auth/auth.service';
-import { MensajeService } from '../../../core/mensaje/mensaje.service';
-import { primerMensajeError } from '../../../shared/utils/formularios';
-import type { ReglaMensaje } from '../../../shared/utils/formularios';
-import { correoValido, requeridoConContenido } from '../../../shared/utils/validadores';
+import { AuthService, LoginResult } from '../../../core/auth/auth.service';
+import { MessageService } from '../../../core/message/message.service';
+import { firstErrorMessage } from '../../../shared/utils/forms';
+import type { MessageRule } from '../../../shared/utils/forms';
+import { validEmail, requiredWithContent } from '../../../shared/utils/validators';
 
-/** Validaciones del login, en el mismo orden que la app original. */
-const ERRORES_LOGIN: ReglaMensaje[] = [
-  { control: 'correo', error: 'requerido', mensaje: 'Ingresa tu correo' },
-  { control: 'correo', error: 'correo', mensaje: 'Ingresa un correo electrónico válido' },
-  { control: 'password', error: 'requerido', mensaje: 'Ingresa tu contraseña' },
+const LOGIN_ERRORS: MessageRule[] = [
+  { control: 'correo', error: 'required', message: 'Ingresa tu correo' },
+  { control: 'correo', error: 'requerido', message: 'Ingresa tu correo' },
+  { control: 'correo', error: 'email', message: 'Ingresa un correo electrónico válido' },
+  { control: 'correo', error: 'correo', message: 'Ingresa un correo electrónico válido' },
+  { control: 'password', error: 'required', message: 'Ingresa tu contraseña' },
+  { control: 'password', error: 'requerido', message: 'Ingresa tu contraseña' },
 ];
 
-/** Inicio de sesión con correo y contraseña. */
+/** User sign-in screen. */
 @Component({
   selector: 'app-login',
   templateUrl: './login.page.html',
@@ -43,45 +45,54 @@ const ERRORES_LOGIN: ReglaMensaje[] = [
   ],
 })
 export class LoginPage {
-  readonly formulario = new FormGroup({
-    correo: new FormControl<string>('', { nonNullable: true, validators: [requeridoConContenido, correoValido] }),
-    password: new FormControl<string>('', { nonNullable: true, validators: [requeridoConContenido] }),
+  readonly form = new FormGroup({
+    correo: new FormControl<string>('', { nonNullable: true, validators: [requiredWithContent, validEmail] }),
+    password: new FormControl<string>('', { nonNullable: true, validators: [requiredWithContent] }),
   });
+  readonly formulario = this.form;
 
-  readonly cargando = signal(false);
+  readonly loading = signal(false);
+  readonly cargando = this.loading;
 
   private readonly auth = inject(AuthService);
-  private readonly mensajes = inject(MensajeService);
+  private readonly messageService = inject(MessageService);
   private readonly router = inject(Router);
 
-  async iniciarSesion(): Promise<void> {
-    const error = primerMensajeError(this.formulario, ERRORES_LOGIN);
+  async signIn(): Promise<void> {
+    const error = firstErrorMessage(this.form, LOGIN_ERRORS);
     if (error) {
-      await this.mensajes.mostrar(error);
+      await this.messageService.show(error);
       return;
     }
 
-    this.cargando.set(true);
-    const { correo, password } = this.formulario.getRawValue();
-    const resultado = await this.auth.login(correo.trim(), password);
-    this.cargando.set(false);
+    this.loading.set(true);
+    const { correo, password } = this.form.getRawValue();
+    const result = await this.auth.login(correo.trim(), password);
+    this.loading.set(false);
 
-    switch (resultado) {
-      case ResultadoLogin.EXITO:
-        await this.mensajes.mostrar('¡Bienvenido a Kompa!');
-        // replaceUrl evita volver al login con "atrás" (como FLAG_ACTIVITY_CLEAR_TASK)
+    switch (result) {
+      case LoginResult.SUCCESS:
+        await this.messageService.show('¡Bienvenido a Kompa!');
         await this.router.navigateByUrl('/home', { replaceUrl: true });
         break;
-      case ResultadoLogin.CUENTA_INEXISTENTE:
-        await this.mensajes.mostrar('Este correo aún no está registrado');
+      case LoginResult.ACCOUNT_NOT_FOUND:
+        await this.messageService.show('Este correo aún no está registrado');
         break;
-      case ResultadoLogin.CONTRASENA_INCORRECTA:
-        await this.mensajes.mostrar('Contraseña incorrecta');
+      case LoginResult.WRONG_PASSWORD:
+        await this.messageService.show('Contraseña incorrecta');
         break;
     }
   }
 
+  iniciarSesion(): Promise<void> {
+    return this.signIn();
+  }
+
+  goToRecover(): void {
+    void this.router.navigateByUrl('/recover');
+  }
+
   irARecuperar(): void {
-    void this.router.navigateByUrl('/recuperar');
+    this.goToRecover();
   }
 }

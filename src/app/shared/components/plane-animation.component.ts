@@ -1,26 +1,25 @@
 import type { AfterViewInit, ElementRef, OnDestroy } from '@angular/core';
 import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
 
-// Mismos valores que AirplaneAnimationView.kt
-const DURACION_VUELO_MS = 4000;
-const DURACION_PAUSA_MS = 300;
-const COLOR_FONDO = '#F2F2F2';
-const COLOR_CUERPO = '#7B2CBF';
-const COLOR_ALAS = '#9D4EDD';
-const COLOR_ESTELA = '#9D4EDD';
-const ALFA_MINIMO = 140 / 255;
-const ANGULO_INICIO = -Math.PI / 2; // arriba del círculo
+const FLIGHT_DURATION_MS = 4000;
+const PAUSE_DURATION_MS = 300;
+const BG_COLOR = '#F2F2F2';
+const BODY_COLOR = '#7B2CBF';
+const WINGS_COLOR = '#9D4EDD';
+const TRAIL_COLOR = '#9D4EDD';
+const MIN_ALPHA = 140 / 255;
+const START_ANGLE = -Math.PI / 2;
 
-interface FormaAvion {
-  cuerpo: Path2D;
-  alas: Path2D;
-  cola: Path2D;
+interface AirplaneShape {
+  body: Path2D;
+  wings: Path2D;
+  tail: Path2D;
 }
 
-/** Animación del avión que da la vuelta completa (AirplaneAnimationView.kt). */
+/** Airplane rotation animation. */
 @Component({
-  selector: 'app-avion-animacion',
-  template: '<canvas #lienzo></canvas>',
+  selector: 'app-plane-animation',
+  template: '<canvas #canvas></canvas>',
   styles: [
     `
       :host {
@@ -36,24 +35,25 @@ interface FormaAvion {
     `,
   ],
 })
-export class AvionAnimacionComponent implements AfterViewInit, OnDestroy {
-  @Output() vueloCompletado = new EventEmitter<void>();
-  @ViewChild('lienzo', { static: true }) lienzo!: ElementRef<HTMLCanvasElement>;
+export class PlaneAnimationComponent implements AfterViewInit, OnDestroy {
+  @Output() flightCompleted = new EventEmitter<void>();
+  @Output() vueloCompletado = this.flightCompleted;
+
+  @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
   private ctx!: CanvasRenderingContext2D;
-  private avion!: FormaAvion;
-  private ancho = 0;
-  private alto = 0;
-  private centroX = 0;
-  private centroY = 0;
-  private radio = 0;
+  private plane!: AirplaneShape;
+  private width = 0;
+  private height = 0;
+  private centerX = 0;
+  private centerY = 0;
+  private radius = 0;
   private frame = 0;
 
   ngAfterViewInit(): void {
-    // Se espera un cuadro para que el canvas ya tenga tamaño
     this.frame = requestAnimationFrame(() => {
-      this.preparar();
-      this.iniciarVuelo();
+      this.setup();
+      this.startFlight();
     });
   }
 
@@ -61,137 +61,131 @@ export class AvionAnimacionComponent implements AfterViewInit, OnDestroy {
     cancelAnimationFrame(this.frame);
   }
 
-  private preparar(): void {
-    const canvas = this.lienzo.nativeElement;
-    const densidad = window.devicePixelRatio || 1;
-    this.ancho = canvas.clientWidth;
-    this.alto = canvas.clientHeight;
-    canvas.width = this.ancho * densidad;
-    canvas.height = this.alto * densidad;
+  private setup(): void {
+    const canvas = this.canvasRef.nativeElement;
+    const density = window.devicePixelRatio || 1;
+    this.width = canvas.clientWidth;
+    this.height = canvas.clientHeight;
+    canvas.width = this.width * density;
+    canvas.height = this.height * density;
 
-    this.ctx = canvas.getContext('2d')!;
-    this.ctx.setTransform(densidad, 0, 0, densidad, 0, 0);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    this.ctx = ctx;
+    this.ctx.setTransform(density, 0, 0, density, 0, 0);
 
-    const menor = Math.min(this.ancho, this.alto);
-    this.avion = construirAvion(menor * 0.25);
-    this.centroX = this.ancho / 2;
-    this.centroY = this.alto / 2;
-    this.radio = menor * 0.3;
+    const minDimension = Math.min(this.width, this.height);
+    this.plane = buildAirplane(minDimension * 0.25);
+    this.centerX = this.width / 2;
+    this.centerY = this.height / 2;
+    this.radius = minDimension * 0.3;
   }
 
-  /** Una vuelta completa en 4 s, acelerando y frenando. */
-  private iniciarVuelo(): void {
-    const inicio = performance.now();
-    const paso = (ahora: number): void => {
-      const t = Math.min((ahora - inicio) / DURACION_VUELO_MS, 1);
-      const angulo = ANGULO_INICIO + 2 * Math.PI * aceleraDesacelera(t);
-      this.dibujar(angulo, 1);
+  private startFlight(): void {
+    const start = performance.now();
+    const step = (now: number): void => {
+      const t = Math.min((now - start) / FLIGHT_DURATION_MS, 1);
+      const angle = START_ANGLE + 2 * Math.PI * accelerateDecelerate(t);
+      this.draw(angle, 1);
       if (t < 1) {
-        this.frame = requestAnimationFrame(paso);
+        this.frame = requestAnimationFrame(step);
       } else {
-        this.iniciarPausa();
+        this.startPause();
       }
     };
-    this.frame = requestAnimationFrame(paso);
+    this.frame = requestAnimationFrame(step);
   }
 
-  /** El avión parpadea (alfa 1 → 0.55 → 1) y luego avisa que terminó. */
-  private iniciarPausa(): void {
-    const inicio = performance.now();
-    const anguloFinal = ANGULO_INICIO + 2 * Math.PI;
-    const paso = (ahora: number): void => {
-      const t = Math.min((ahora - inicio) / DURACION_PAUSA_MS, 1);
-      const alfa = t < 0.5 ? 1 - (1 - ALFA_MINIMO) * (t / 0.5) : ALFA_MINIMO + (1 - ALFA_MINIMO) * ((t - 0.5) / 0.5);
-      this.dibujar(anguloFinal, alfa);
+  private startPause(): void {
+    const start = performance.now();
+    const finalAngle = START_ANGLE + 2 * Math.PI;
+    const step = (now: number): void => {
+      const t = Math.min((now - start) / PAUSE_DURATION_MS, 1);
+      const alpha = t < 0.5 ? 1 - (1 - MIN_ALPHA) * (t / 0.5) : MIN_ALPHA + (1 - MIN_ALPHA) * ((t - 0.5) / 0.5);
+      this.draw(finalAngle, alpha);
       if (t < 1) {
-        this.frame = requestAnimationFrame(paso);
+        this.frame = requestAnimationFrame(step);
       } else {
-        this.dibujar(anguloFinal, 1);
-        this.vueloCompletado.emit();
+        this.draw(finalAngle, 1);
+        this.flightCompleted.emit();
       }
     };
-    this.frame = requestAnimationFrame(paso);
+    this.frame = requestAnimationFrame(step);
   }
 
-  private dibujar(angulo: number, alfa: number): void {
+  private draw(angle: number, alpha: number): void {
     const ctx = this.ctx;
+    if (!ctx) return;
 
     ctx.globalAlpha = 1;
-    ctx.fillStyle = COLOR_FONDO;
-    ctx.fillRect(0, 0, this.ancho, this.alto);
+    ctx.fillStyle = BG_COLOR;
+    ctx.fillRect(0, 0, this.width, this.height);
 
-    // Estela: el arco recorrido hasta ahora
     ctx.beginPath();
-    ctx.arc(this.centroX, this.centroY, this.radio, ANGULO_INICIO, angulo);
-    ctx.strokeStyle = COLOR_ESTELA;
+    ctx.arc(this.centerX, this.centerY, this.radius, START_ANGLE, angle);
+    ctx.strokeStyle = TRAIL_COLOR;
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();
 
-    // Avión en su posición, girado según la tangente
-    const x = this.centroX + this.radio * Math.cos(angulo);
-    const y = this.centroY + this.radio * Math.sin(angulo);
+    const x = this.centerX + this.radius * Math.cos(angle);
+    const y = this.centerY + this.radius * Math.sin(angle);
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(angulo + Math.PI);
-    ctx.globalAlpha = alfa;
-    ctx.fillStyle = COLOR_ALAS;
-    ctx.fill(this.avion.alas);
-    ctx.fillStyle = COLOR_CUERPO;
-    ctx.fill(this.avion.cola);
-    ctx.fill(this.avion.cuerpo);
+    ctx.rotate(angle + Math.PI);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = WINGS_COLOR;
+    ctx.fill(this.plane.wings);
+    ctx.fillStyle = BODY_COLOR;
+    ctx.fill(this.plane.tail);
+    ctx.fill(this.plane.body);
     ctx.restore();
   }
 }
 
-/** Igual que AccelerateDecelerateInterpolator */
-function aceleraDesacelera(t: number): number {
+function accelerateDecelerate(t: number): number {
   return Math.cos((t + 1) * Math.PI) / 2 + 0.5;
 }
 
-/** Equivale a Airplane.kt: buildBody(), buildWings() y buildTail() */
-function construirAvion(s: number): FormaAvion {
-  // Cuerpo
-  const mitad = s * 0.08;
-  const narizY = -s * 0.5;
-  const colaY = s * 0.35;
-  const cuerpo = new Path2D();
-  cuerpo.moveTo(0, narizY);
-  cuerpo.quadraticCurveTo(mitad * 1.3, narizY * 0.5, mitad, colaY * 0.3);
-  cuerpo.lineTo(mitad * 0.6, colaY);
-  cuerpo.lineTo(-mitad * 0.6, colaY);
-  cuerpo.lineTo(-mitad, colaY * 0.3);
-  cuerpo.quadraticCurveTo(-mitad * 1.3, narizY * 0.5, 0, narizY);
-  cuerpo.closePath();
+function buildAirplane(s: number): AirplaneShape {
+  const half = s * 0.08;
+  const noseY = -s * 0.5;
+  const tailY = s * 0.35;
+  const body = new Path2D();
+  body.moveTo(0, noseY);
+  body.quadraticCurveTo(half * 1.3, noseY * 0.5, half, tailY * 0.3);
+  body.lineTo(half * 0.6, tailY);
+  body.lineTo(-half * 0.6, tailY);
+  body.lineTo(-half, tailY * 0.3);
+  body.quadraticCurveTo(-half * 1.3, noseY * 0.5, 0, noseY);
+  body.closePath();
 
-  // Alas
-  const envergadura = s * 0.45;
-  const alaY = s * 0.02;
-  const puntaY = s * 0.22;
-  const alas = new Path2D();
-  alas.moveTo(s * 0.06, alaY);
-  alas.lineTo(envergadura, puntaY);
-  alas.quadraticCurveTo(envergadura * 0.85, puntaY + s * 0.05, s * 0.08, alaY + s * 0.12);
-  alas.closePath();
-  alas.moveTo(-s * 0.06, alaY);
-  alas.lineTo(-envergadura, puntaY);
-  alas.quadraticCurveTo(-envergadura * 0.85, puntaY + s * 0.05, -s * 0.08, alaY + s * 0.12);
-  alas.closePath();
+  const wingspan = s * 0.45;
+  const wingY = s * 0.02;
+  const tipY = s * 0.22;
+  const wings = new Path2D();
+  wings.moveTo(s * 0.06, wingY);
+  wings.lineTo(wingspan, tipY);
+  wings.quadraticCurveTo(wingspan * 0.85, tipY + s * 0.05, s * 0.08, wingY + s * 0.12);
+  wings.closePath();
+  wings.moveTo(-s * 0.06, wingY);
+  wings.lineTo(-wingspan, tipY);
+  wings.quadraticCurveTo(-wingspan * 0.85, tipY + s * 0.05, -s * 0.08, wingY + s * 0.12);
+  wings.closePath();
 
-  // Cola
-  const colaEnv = s * 0.2;
-  const colaInicioY = s * 0.25;
-  const colaPuntaY = s * 0.4;
-  const cola = new Path2D();
-  cola.moveTo(s * 0.05, colaInicioY);
-  cola.lineTo(colaEnv, colaPuntaY);
-  cola.lineTo(s * 0.06, colaInicioY + s * 0.08);
-  cola.closePath();
-  cola.moveTo(-s * 0.05, colaInicioY);
-  cola.lineTo(-colaEnv, colaPuntaY);
-  cola.lineTo(-s * 0.06, colaInicioY + s * 0.08);
-  cola.closePath();
+  const tailSpan = s * 0.2;
+  const tailStartY = s * 0.25;
+  const tailTipY = s * 0.4;
+  const tail = new Path2D();
+  tail.moveTo(s * 0.05, tailStartY);
+  tail.lineTo(tailSpan, tailTipY);
+  tail.lineTo(s * 0.06, tailStartY + s * 0.08);
+  tail.closePath();
+  tail.moveTo(-s * 0.05, tailStartY);
+  tail.lineTo(-tailSpan, tailTipY);
+  tail.lineTo(-s * 0.06, tailStartY + s * 0.08);
+  tail.closePath();
 
-  return { cuerpo, alas, cola };
+  return { body, wings, tail };
 }

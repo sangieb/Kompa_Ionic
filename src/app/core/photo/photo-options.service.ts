@@ -1,42 +1,42 @@
 import { Injectable, inject } from '@angular/core';
 import { ActionSheetController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { add, camera, images } from 'ionicons/icons';
+import { camera, images } from 'ionicons/icons';
 
-/** Fuente de la que se quiere obtener la foto. */
+/** Source option for acquiring photos. */
+export type PhotoSource = 'camera' | 'gallery';
 export type FuenteFoto = 'camara' | 'galeria';
 
 /**
- * Punto único para preguntar al usuario si quiere tomar la foto o elegirla en
- * la galería (action sheet de Ionic). Devuelve null si desistió.
+ * Action sheet dialog prompting user to capture or choose a photo.
  */
 @Injectable({ providedIn: 'root' })
-export class FotoOpcionesService {
+export class PhotoOptionsService {
   private readonly actionSheetCtrl = inject(ActionSheetController);
 
   constructor() {
-    addIcons({ add, camera, images });
+    addIcons({ camera, images });
   }
 
-  /** Muestra la elección de fuente y resuelve con la que el usuario seleccionó. */
-  async elegirFuente(): Promise<FuenteFoto | null> {
-    let fuente: FuenteFoto | null = null;
+  /** Shows source selection sheet and resolves with selected option, or null if cancelled. */
+  async selectSource(): Promise<PhotoSource | null> {
+    let source: PhotoSource | null = null;
 
     const sheet = await this.actionSheetCtrl.create({
-      header: 'Foto',
+      header: 'Photo',
       buttons: [
         {
           text: 'Tomar foto',
           icon: 'camera',
           handler: () => {
-            fuente = 'camara';
+            source = 'camera';
           },
         },
         {
           text: 'Elegir de galería',
           icon: 'images',
           handler: () => {
-            fuente = 'galeria';
+            source = 'gallery';
           },
         },
         {
@@ -47,6 +47,13 @@ export class FotoOpcionesService {
     });
     await sheet.present();
     await sheet.onDidDismiss();
-    return fuente;
+    return source;
+  }
+
+  async elegirFuente(): Promise<FuenteFoto | null> {
+    const src = await this.selectSource();
+    if (src === 'camera') return 'camara';
+    if (src === 'gallery') return 'galeria';
+    return null;
   }
 }

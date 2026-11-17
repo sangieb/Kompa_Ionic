@@ -2,9 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { Geolocation, type PermissionStatus } from '@capacitor/geolocation';
 import { vi } from 'vitest';
 
-import { MensajeService } from '../mensaje/mensaje.service';
+import { MessageService } from '../message/message.service';
 
-import { PermisosService } from './permisos.service';
+import { PermissionsService } from './permissions.service';
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: { isNativePlatform: () => true, getPlatform: () => 'android' },
@@ -24,62 +24,62 @@ vi.mock('capacitor-native-settings', () => ({
   NativeSettings: { open: vi.fn() },
 }));
 
-function estado(
+function status(
   location: PermissionStatus['location'],
   coarseLocation: PermissionStatus['coarseLocation'],
 ): PermissionStatus {
   return { location, coarseLocation };
 }
 
-describe('PermisosService', () => {
-  let servicio: PermisosService;
+describe('PermissionsService', () => {
+  let service: PermissionsService;
 
   beforeEach(() => {
     vi.clearAllMocks();
     TestBed.configureTestingModule({
-      providers: [PermisosService, { provide: MensajeService, useValue: { mostrar: vi.fn() } }],
+      providers: [PermissionsService, { provide: MessageService, useValue: { show: vi.fn(), mostrar: vi.fn() } }],
     });
-    servicio = TestBed.inject(PermisosService);
+    service = TestBed.inject(PermissionsService);
   });
 
-  it('acepta la ubicación aproximada como permiso válido', async () => {
-    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(estado('denied', 'granted'));
+  it('accepts coarse location as valid permission', async () => {
+    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(status('denied', 'granted'));
 
-    await expect(servicio.estadoUbicacion()).resolves.toBe('granted');
-    await expect(servicio.solicitarUbicacion()).resolves.toBe(true);
+    await expect(service.locationStatus()).resolves.toBe('granted');
+    await expect(service.requestLocation()).resolves.toBe(true);
   });
 
-  it('no vuelve a pedir el diálogo si ya hay un alias concedido', async () => {
-    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(estado('granted', 'granted'));
+  it('does not re-request prompt if an alias is already granted', async () => {
+    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(status('granted', 'granted'));
 
-    await expect(servicio.solicitarUbicacion()).resolves.toBe(true);
+    await expect(service.requestLocation()).resolves.toBe(true);
     expect(Geolocation.requestPermissions).not.toHaveBeenCalled();
   });
 
-  it('pide el permiso cuando ambos alias están en prompt', async () => {
-    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(estado('prompt', 'prompt'));
-    vi.mocked(Geolocation.requestPermissions).mockResolvedValue(estado('denied', 'granted'));
+  it('requests permission when both aliases are prompt', async () => {
+    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(status('prompt', 'prompt'));
+    vi.mocked(Geolocation.requestPermissions).mockResolvedValue(status('denied', 'granted'));
 
-    await expect(servicio.solicitarUbicacion()).resolves.toBe(true);
+    await expect(service.requestLocation()).resolves.toBe(true);
     expect(Geolocation.requestPermissions).toHaveBeenCalled();
   });
 
-  it('devuelve false ante una denegación permanente', async () => {
-    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(estado('denied', 'denied'));
+  it('returns false upon permanent denial', async () => {
+    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(status('denied', 'denied'));
 
-    await expect(servicio.solicitarUbicacion()).resolves.toBe(false);
-    await expect(servicio.estadoUbicacion()).resolves.toBe('denied');
+    await expect(service.requestLocation()).resolves.toBe(false);
+    await expect(service.locationStatus()).resolves.toBe('denied');
   });
 
-  it('informa los servicios de ubicación apagados en vez de "no disponible"', async () => {
+  it('reports services-off instead of unavailable when location services are disabled', async () => {
     vi.mocked(Geolocation.checkPermissions).mockRejectedValue({ code: 'OS-PLUG-GLOC-0007' });
 
-    await expect(servicio.estadoUbicacion()).resolves.toBe('servicios-apagados');
+    await expect(service.locationStatus()).resolves.toBe('servicios-apagados');
   });
 
-  it('mantiene "no disponible" para un fallo de consulta desconocido', async () => {
+  it('maintains unavailable for unknown check errors', async () => {
     vi.mocked(Geolocation.checkPermissions).mockRejectedValue(new Error('boom'));
 
-    await expect(servicio.estadoUbicacion()).resolves.toBe('unavailable');
+    await expect(service.locationStatus()).resolves.toBe('unavailable');
   });
 });

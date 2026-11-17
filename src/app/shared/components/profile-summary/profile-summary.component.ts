@@ -11,53 +11,78 @@ import {
   personOutline,
 } from 'ionicons/icons';
 
-import type { Perfil } from '../../../core/perfil/perfil.model';
-import { edadDesdeFechaTexto } from '../../utils/fechas';
+import type { Profile } from '../../../core/profile/profile.model';
+import { ageFromDateText } from '../../utils/dates';
 
 /**
- * Muestra el resumen de un perfil (portada, datos y chips). Lo usan la vista
- * previa del registro y la página de perfil.
- *
- * Con `editable` el avatar se vuelve un botón que avisa al consumidor (página
- * de perfil) que debe mostrar el selector de foto; la captura sigue en el
- * consumidor, porque el selector necesita un punto de integración.
+ * Displays profile overview (cover, details, and chips).
  */
 @Component({
-  selector: 'app-perfil-resumen',
-  templateUrl: './perfil-resumen.component.html',
-  styleUrls: ['./perfil-resumen.component.scss'],
+  selector: 'app-profile-summary',
+  templateUrl: './profile-summary.component.html',
+  styleUrls: ['./profile-summary.component.scss'],
   imports: [IonChip, IonIcon],
 })
-export class PerfilResumenComponent {
-  @Input({ required: true }) perfil!: Perfil;
-  /** Si es true, el avatar se muestra como botón para cambiar la foto. */
+export class ProfileSummaryComponent {
+  @Input() profile!: Profile;
+
+  @Input() set perfil(p: Profile) {
+    this.profile = p;
+  }
+  get perfil(): Profile {
+    return this.profile;
+  }
+
   @Input() editable = false;
 
-  @Output() editarFoto = new EventEmitter<void>();
+  @Output() editPhoto = new EventEmitter<void>();
+  @Output() editarFoto = this.editPhoto;
 
   constructor() {
     addIcons({ camera, calendarOutline, flagOutline, personOutline, peopleOutline, languageOutline, heartOutline });
   }
 
-  /** "31/05/2000 (25 años)" o solo la fecha si no se puede calcular la edad. */
+  get birthDateText(): string {
+    const rawDate = this.profile?.birthDate ?? this.profile?.fechaNacimiento ?? '';
+    const age = this.age;
+    return age !== null ? `${rawDate} (${age} años)` : rawDate;
+  }
+
   get nacimiento(): string {
-    const edad = this.edad;
-    return edad !== null ? `${this.perfil.fechaNacimiento} (${edad} años)` : this.perfil.fechaNacimiento;
+    return this.birthDateText;
+  }
+
+  get age(): number | null {
+    const rawDate = this.profile?.birthDate ?? this.profile?.fechaNacimiento ?? '';
+    return ageFromDateText(rawDate);
   }
 
   get edad(): number | null {
-    return edadDesdeFechaTexto(this.perfil.fechaNacimiento);
+    return this.age;
+  }
+
+  get connect(): string {
+    const list = this.profile?.connectWith ?? this.profile?.conectar ?? [];
+    return list.join(', ');
   }
 
   get conectar(): string {
-    return this.perfil.conectar.join(', ');
+    return this.connect;
+  }
+
+  get languagesCount(): number {
+    return (this.profile?.languages ?? this.profile?.idiomas ?? []).length;
   }
 
   get idiomas(): number {
-    return this.perfil.idiomas.length;
+    return this.languagesCount;
+  }
+
+  get interestsCount(): number {
+    return (this.profile?.interests ?? this.profile?.intereses ?? []).length;
   }
 
   get intereses(): number {
-    return this.perfil.intereses.length;
+    return this.interestsCount;
   }
 }

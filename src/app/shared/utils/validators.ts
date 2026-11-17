@@ -1,50 +1,52 @@
 import type { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
-import { edadDesdeIso } from './fechas';
-import { esCorreoValido } from './validaciones';
+import { ageFromIso } from './dates';
+import { isValidEmail } from './validations';
 
-/** Requerido que además rechaza puros espacios en blanco. */
-export function requeridoConContenido(control: AbstractControl): ValidationErrors | null {
-  return String(control.value ?? '').trim().length === 0 ? { requerido: true } : null;
+/** Required field validator that rejects whitespace-only inputs. */
+export function requiredWithContent(control: AbstractControl): ValidationErrors | null {
+  return String(control.value ?? '').trim().length === 0 ? { required: true, requerido: true } : null;
 }
 
-/** Texto que, sin espacios de más, queda más corto que `min` caracteres. */
-export function longitudMinima(min: number): ValidatorFn {
+/** Minimum length validator after trimming whitespace. */
+export function minLength(min: number): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const texto = String(control.value ?? '').trim();
-    return texto.length < min ? { longitudMinima: { min, actual: texto.length } } : null;
+    const text = String(control.value ?? '').trim();
+    return text.length < min
+      ? { minLength: { min, actual: text.length }, longitudMinima: { min, actual: text.length } }
+      : null;
   };
 }
 
-/** Checkbox obligatorio: sin marcar cuenta como vacío. */
-export function aceptadoRequerido(control: AbstractControl): ValidationErrors | null {
-  return control.value === true ? null : { requerido: true };
+/** Checkbox mandatory validator: unchecked counts as empty. */
+export function requiredAccepted(control: AbstractControl): ValidationErrors | null {
+  return control.value === true ? null : { required: true, requerido: true };
 }
 
-/** Correo con formato válido (el vacío lo revisa requeridoConContenido). */
-export function correoValido(control: AbstractControl): ValidationErrors | null {
-  const valor = String(control.value ?? '').trim();
-  if (!valor) return null;
-  return esCorreoValido(valor) ? null : { correo: true };
+/** Valid email format validator. */
+export function validEmail(control: AbstractControl): ValidationErrors | null {
+  const value = String(control.value ?? '').trim();
+  if (!value) return null;
+  return isValidEmail(value) ? null : { email: true, correo: true };
 }
 
-/** Fecha "yyyy-mm-dd" de alguien menor de 18 años. */
-export function mayorDeEdad(control: AbstractControl): ValidationErrors | null {
-  const valor = String(control.value ?? '');
-  if (!valor) return null;
-  return (edadDesdeIso(valor) ?? 0) < 18 ? { mayorDeEdad: true } : null;
+/** Age validation ensuring user is at least 18 years old. */
+export function legalAge(control: AbstractControl): ValidationErrors | null {
+  const value = String(control.value ?? '');
+  if (!value) return null;
+  return (ageFromIso(value) ?? 0) < 18 ? { legalAge: true, mayorDeEdad: true } : null;
 }
 
-/** Número entero mayor que cero (la cadena vacía también falla). */
-export function enteroPositivo(control: AbstractControl): ValidationErrors | null {
-  const numero = Number(String(control.value ?? '').trim());
-  return !Number.isInteger(numero) || numero <= 0 ? { enteroPositivo: true } : null;
+/** Positive integer validator. */
+export function positiveInteger(control: AbstractControl): ValidationErrors | null {
+  const num = Number(String(control.value ?? '').trim());
+  return !Number.isInteger(num) || num <= 0 ? { positiveInteger: true, enteroPositivo: true } : null;
 }
 
-/** Fecha/hora en el futuro ("yyyy-MM-ddTHH:mm" del input datetime-local). */
-export function fechaFutura(control: AbstractControl): ValidationErrors | null {
-  const valor = String(control.value ?? '');
-  if (!valor) return null;
-  const fecha = new Date(valor).getTime();
-  return Number.isNaN(fecha) || fecha <= Date.now() ? { fechaFutura: true } : null;
+/** Future datetime validator ("yyyy-MM-ddTHH:mm"). */
+export function futureDate(control: AbstractControl): ValidationErrors | null {
+  const value = String(control.value ?? '');
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) || time <= Date.now() ? { futureDate: true, fechaFutura: true } : null;
 }

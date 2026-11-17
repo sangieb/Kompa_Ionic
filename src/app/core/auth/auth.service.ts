@@ -1,75 +1,86 @@
 import { Injectable, inject } from '@angular/core';
 
-import { AlmacenamientoService } from '../storage/almacenamiento.service';
-import { ClavesAlmacenamiento } from '../storage/claves';
+import { StorageKeys } from '../storage/storage-keys';
+import { StorageService } from '../storage/storage.service';
 
-import { CuentaService } from './cuenta.service';
+import { AccountService } from './account.service';
 
-/** Longitud mínima de la contraseña, como AuthConfig.MIN_PASSWORD_LEN */
+/** Minimum password length. */
 export const MIN_PASSWORD_LEN = 6;
 
-/** Resultado de intentar iniciar sesión. */
-export enum ResultadoLogin {
-  EXITO = 'EXITO',
-  CUENTA_INEXISTENTE = 'CUENTA_INEXISTENTE',
-  CONTRASENA_INCORRECTA = 'CONTRASENA_INCORRECTA',
+/** Result of a login attempt. */
+export enum LoginResult {
+  SUCCESS = 'SUCCESS',
+  ACCOUNT_NOT_FOUND = 'ACCOUNT_NOT_FOUND',
+  WRONG_PASSWORD = 'WRONG_PASSWORD',
 }
 
-interface Sesion {
-  usuarioId: string;
-  correo: string;
+export interface Session {
+  userId: string;
+  email: string;
   accessToken: string;
   refreshToken: string;
-  expiraEn: number;
+  expiresAt: number;
 }
 
-const DURACION_ACCESO_MS = 15 * 60 * 1000; // 15 minutos
+const ACCESS_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
- * Sesión del usuario (equivale a AuthRepository + TokenStore).
- * Nota: los tokens son simulados porque no hay backend; una sesión real
- * debería validarse contra el servidor.
+ * User session management.
+ * Note: tokens are mock tokens for client-side persistence.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly almacenamiento = inject(AlmacenamientoService);
-  private readonly cuentas = inject(CuentaService);
+  private readonly storage = inject(StorageService);
+  private readonly accounts = inject(AccountService);
 
-  async login(correo: string, password: string): Promise<ResultadoLogin> {
-    if (!correo.trim() || !password.trim() || password.length < MIN_PASSWORD_LEN) {
-      return ResultadoLogin.CONTRASENA_INCORRECTA;
+  async login(email: string, password: string): Promise<LoginResult> {
+    if (!email.trim() || !password.trim() || password.length < MIN_PASSWORD_LEN) {
+      return LoginResult.WRONG_PASSWORD;
     }
-    if (!(await this.cuentas.existe(correo))) {
-      return ResultadoLogin.CUENTA_INEXISTENTE;
+    if (!(await this.accounts.exists(email))) {
+      return LoginResult.ACCOUNT_NOT_FOUND;
     }
-    if (!(await this.cuentas.verificar(correo, password))) {
-      return ResultadoLogin.CONTRASENA_INCORRECTA;
+    if (!(await this.accounts.verify(email, password))) {
+      return LoginResult.WRONG_PASSWORD;
     }
-    await this.crearSesion(correo);
-    return ResultadoLogin.EXITO;
+    await this.createSession(email);
+    return LoginResult.SUCCESS;
   }
 
-  async crearSesion(correo: string): Promise<void> {
-    const sesion: Sesion = {
-      usuarioId: crypto.randomUUID(),
-      correo,
+  async createSession(email: string): Promise<void> {
+    const session: Session = {
+      userId: crypto.randomUUID(),
+      email,
       accessToken: `mock_access_${crypto.randomUUID()}`,
       refreshToken: `mock_refresh_${crypto.randomUUID()}`,
-      expiraEn: Date.now() + DURACION_ACCESO_MS,
+      expiresAt: Date.now() + ACCESS_DURATION_MS,
     };
-    await this.almacenamiento.guardar(ClavesAlmacenamiento.sesion, sesion);
+    await this.storage.set(StorageKeys.session, session);
   }
 
-  async sesionActiva(): Promise<boolean> {
-    return this.almacenamiento.existe(ClavesAlmacenamiento.sesion);
+  async hasActiveSession(): Promise<boolean> {
+    return this.storage.has(StorageKeys.session);
   }
 
-  async correoActual(): Promise<string | null> {
-    const sesion = await this.almacenamiento.leer<Sesion | null>(ClavesAlmacenamiento.sesion, null);
-    return sesion?.correo ?? null;
+  async getCurrentEmail(): Promise<string | null> {
+    const session = await this.storage.get<Session | null>(StorageKeys.session, null);
+    return session?.email ?? null;
   }
 
   async logout(): Promise<void> {
-    await this.almacenamiento.borrar(ClavesAlmacenamiento.sesion);
+    await this.storage.remove(StorageKeys.session);
+  }
+
+  async crearSesion(correo: string): Promise<void> {
+    return this.createSession(correo);
+  }
+
+  async sesionActiva(): Promise<boolean> {
+    return this.hasActiveSession();
+  }
+
+  async correoActual(): Promise<string | null> {
+    return this.getCurrentEmail();
   }
 }

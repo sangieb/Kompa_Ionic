@@ -19,11 +19,11 @@ test('el login avisa cuando el correo no es válido', async ({ page }) => {
 
 test('sin sesión, las rutas privadas devuelven al inicio', async ({ page }) => {
   await page.goto('/home');
-  await expect(page).toHaveURL(/\/inicio$/);
+  await expect(page).toHaveURL(/\/welcome$/);
 });
 
 test('el registro muestra el consentimiento y abre el documento legal', async ({ page }) => {
-  await page.goto('/registro');
+  await page.goto('/register');
 
   await expect(page.getByRole('heading', { name: 'Antes de continuar' })).toBeVisible({ timeout: 15000 });
   await expect(page.locator('ion-checkbox')).toHaveCount(2);

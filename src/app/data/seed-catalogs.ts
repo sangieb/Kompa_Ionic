@@ -1,12 +1,16 @@
-// En Kotlin cada valor tenía un "orden"; aquí el orden es la posición en el arreglo.
-export interface Catalogos {
-  nacionalidades: string[];
-  idiomas: string[];
-  intereses: string[];
+export interface Catalogs {
+  nationalities: string[];
+  languages: string[];
+  interests: string[];
+  nacionalidades?: string[];
+  idiomas?: string[];
+  intereses?: string[];
 }
 
-export const CATALOGOS_SEMILLA: Catalogos = {
-  intereses: [
+export type Catalogos = Catalogs;
+
+export const SEED_CATALOGS: Catalogs = {
+  interests: [
     'Senderismo',
     'Playa',
     'Mochilero',
@@ -23,7 +27,7 @@ export const CATALOGOS_SEMILLA: Catalogos = {
     'Buceo',
     'Road trips',
   ],
-  nacionalidades: [
+  nationalities: [
     'Mexicana/o',
     'Colombiana/o',
     'Argentina/o',
@@ -35,11 +39,20 @@ export const CATALOGOS_SEMILLA: Catalogos = {
     'Ecuatoriana/o',
     'Otro/Otra',
   ],
-  idiomas: ['Español', 'Inglés', 'Portugués', 'Francés', 'Alemán', 'Italiano', 'Otro'],
+  languages: ['Español', 'Inglés', 'Portugués', 'Francés', 'Alemán', 'Italiano', 'Otro'],
 };
 
-/** Opciones del género en el registro. Es un dato opcional. */
-export const GENEROS = ['Mujer', 'Hombre', 'No binario', 'Prefiero describirlo', 'Prefiero no decirlo'] as const;
+// Populate compatibility fields
+SEED_CATALOGS.nacionalidades = SEED_CATALOGS.nationalities;
+SEED_CATALOGS.idiomas = SEED_CATALOGS.languages;
+SEED_CATALOGS.intereses = SEED_CATALOGS.interests;
 
-/** Opciones de "¿con quién quieres conectar?" en el registro. */
-export const OPCIONES_CONECTAR = ['Mujeres', 'Hombres', 'Todes'] as const;
+export const CATALOGOS_SEMILLA = SEED_CATALOGS;
+
+/** Gender options during registration (optional field). */
+export const GENDERS = ['Mujer', 'Hombre', 'No binario', 'Prefiero describirlo', 'Prefiero no decirlo'] as const;
+export const GENEROS = GENDERS;
+
+/** Connection options during registration. */
+export const CONNECT_OPTIONS = ['Mujeres', 'Hombres', 'Todes'] as const;
+export const OPCIONES_CONECTAR = CONNECT_OPTIONS;

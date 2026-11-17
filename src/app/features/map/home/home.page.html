@@ -9,7 +9,7 @@
 
   @if (mostrarAviso()) {
   <div slot="fixed" class="zona-aviso">
-    <app-aviso-permiso
+    <app-permission-notice
       [titulo]="tituloAviso()"
       [mensaje]="mensajeAviso()"
       [icono]="iconoAviso()"
@@ -32,5 +32,5 @@
     </button>
   </div>
 
-  <app-barra-inferior slot="fixed"></app-barra-inferior>
+  <app-bottom-bar slot="fixed"></app-bottom-bar>
 </ion-content>

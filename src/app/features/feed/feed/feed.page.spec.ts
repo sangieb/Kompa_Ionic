@@ -2,17 +2,17 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
-import type { Publicacion } from '../models/publicacion.model';
-import { PublicacionService } from '../publicacion.service';
+import type { Post } from '../models/post.model';
+import { PostService } from '../post.service';
 
 import { FeedPage } from './feed.page';
 
 /** Stub hermético: ni red ni almacenamiento, la página solo orquesta. */
 const SERVICIO_PRUEBA = {
-  publicacionesLocales: async (): Promise<Publicacion[]> => [
-    { id: '1', titulo: 'Hola', cuerpo: 'Mundo', autor: 'Ana', fechaCreacion: 0, lat: null, lon: null },
+  getLocalPosts: async (): Promise<Post[]> => [
+    { id: '1', title: 'Hola', body: 'Mundo', author: 'Ana', createdAt: 0, lat: null, lon: null },
   ],
-  refrescar: () => of<Publicacion[]>([]),
+  refresh: () => of<Post[]>([]),
 };
 
 describe('FeedPage', () => {
@@ -22,7 +22,7 @@ describe('FeedPage', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [FeedPage],
-      providers: [{ provide: PublicacionService, useValue: SERVICIO_PRUEBA }],
+      providers: [{ provide: PostService, useValue: SERVICIO_PRUEBA }],
     });
 
     fixture = TestBed.createComponent(FeedPage);

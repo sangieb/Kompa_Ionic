@@ -1,35 +1,59 @@
 import { Injectable, inject } from '@angular/core';
 
-import { AlmacenamientoService } from '../storage/almacenamiento.service';
-import { ClavesAlmacenamiento } from '../storage/claves';
+import { StorageKeys } from '../storage/storage-keys';
+import { StorageService } from '../storage/storage.service';
 
-import type { Cuenta } from './models/cuenta.model';
-import { verificarPassword } from './password-hash';
+import type { Account } from './models/account.model';
+import { verifyPassword } from './password-hash';
 import type { PasswordHashData } from './password-hash';
 
-/** Guarda las cuentas registradas en el dispositivo (equivale a CuentaStore). */
+/** Saves and manages registered accounts on the device. */
 @Injectable({ providedIn: 'root' })
-export class CuentaService {
-  private readonly almacenamiento = inject(AlmacenamientoService);
+export class AccountService {
+  private readonly storage = inject(StorageService);
 
-  /** Registra (o reemplaza) la cuenta con la contraseña ya hasheada. */
+  /** Registers or updates an account with hashed credentials. */
+  async register(email: string, credentials: PasswordHashData): Promise<void> {
+    const salt = credentials.salt ?? credentials.sal ?? '';
+    const accounts = (await this.getAll()).filter((c) => (c.email ?? c.correo) !== email);
+    accounts.push({
+      email,
+      salt,
+      hash: credentials.hash,
+      correo: email,
+      sal: salt,
+    });
+    await this.storage.set(StorageKeys.accounts, accounts);
+  }
+
+  async exists(email: string): Promise<boolean> {
+    return (await this.getAll()).some((c) => (c.email ?? c.correo) === email);
+  }
+
+  async verify(email: string, password: string): Promise<boolean> {
+    const account = (await this.getAll()).find((c) => (c.email ?? c.correo) === email);
+    if (!account) return false;
+    const salt = account.salt ?? account.sal ?? '';
+    return verifyPassword(password, salt, account.hash);
+  }
+
+  async getAll(): Promise<Account[]> {
+    return this.storage.get<Account[]>(StorageKeys.accounts, []);
+  }
+
   async registrar(correo: string, credenciales: PasswordHashData): Promise<void> {
-    const cuentas = (await this.todas()).filter((c) => c.correo !== correo);
-    cuentas.push({ correo, sal: credenciales.sal, hash: credenciales.hash });
-    await this.almacenamiento.guardar(ClavesAlmacenamiento.cuentas, cuentas);
+    return this.register(correo, credenciales);
   }
 
   async existe(correo: string): Promise<boolean> {
-    return (await this.todas()).some((c) => c.correo === correo);
+    return this.exists(correo);
   }
 
   async verificar(correo: string, password: string): Promise<boolean> {
-    const cuenta = (await this.todas()).find((c) => c.correo === correo);
-    if (!cuenta) return false;
-    return verificarPassword(password, cuenta.sal, cuenta.hash);
+    return this.verify(correo, password);
   }
 
-  private async todas(): Promise<Cuenta[]> {
-    return this.almacenamiento.leer<Cuenta[]>(ClavesAlmacenamiento.cuentas, []);
+  async todas(): Promise<Account[]> {
+    return this.getAll();
   }
 }

@@ -1,17 +1,21 @@
 import { Injectable, inject } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 
-/** Muestra mensajes breves al usuario (toasts). */
+/** Displays brief toast messages to the user. */
 @Injectable({ providedIn: 'root' })
-export class MensajeService {
+export class MessageService {
   private readonly toastCtrl = inject(ToastController);
 
-  async mostrar(mensaje: string): Promise<void> {
+  async show(message: string): Promise<void> {
     const toast = await this.toastCtrl.create({
-      message: mensaje,
+      message,
       duration: 2000,
       position: 'bottom',
     });
     await toast.present();
+  }
+
+  async mostrar(mensaje: string): Promise<void> {
+    return this.show(mensaje);
   }
 }

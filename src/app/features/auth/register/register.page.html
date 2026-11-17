@@ -138,7 +138,7 @@
         Para crear tu cuenta necesitamos tu aceptación expresa. Puedes leer los documentos completos antes de decidir.
       </p>
 
-      <button type="button" class="enlace-documento" (click)="abrirTerminos()">
+      <button type="button" class="enlace-documento" (click)="openTerms()">
         Leer Términos y Condiciones y autorización de datos
       </button>
 
@@ -166,5 +166,5 @@
     </p>
   </div>
 
-  <app-terminos-modal [abierto]="modalTerminosAbierto()" (cerrado)="cerrarTerminos()" />
+  <app-terms-modal [isOpen]="modalTerminosAbierto()" (dismiss)="closeTerms()" />
 </ion-content>

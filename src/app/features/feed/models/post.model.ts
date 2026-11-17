@@ -1,10 +1,17 @@
-export interface Publicacion {
+export interface Post {
   id: string;
-  titulo: string;
-  cuerpo: string;
-  autor: string;
-  /** Milisegundos de cuando se creó, o null si no se sabe. */
-  fechaCreacion: number | null;
+  title: string;
+  body: string;
+  author: string;
+  /** Milliseconds timestamp when created, or null if unknown. */
+  createdAt: number | null;
   lat: number | null;
   lon: number | null;
+
+  titulo?: string;
+  cuerpo?: string;
+  autor?: string;
+  fechaCreacion?: number | null;
 }
+
+export type Publicacion = Post;

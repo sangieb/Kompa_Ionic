@@ -1,35 +1,47 @@
 import { Injectable, inject } from '@angular/core';
 
-import { AlmacenamientoService } from '../storage/almacenamiento.service';
-import { ClavesAlmacenamiento } from '../storage/claves';
+import { StorageKeys } from '../storage/storage-keys';
+import { StorageService } from '../storage/storage.service';
 
-import { esFormatoViejo, normalizarPerfil } from './perfil.model';
-import type { Perfil } from './perfil.model';
+import { isLegacyFormat, normalizeProfile } from './profile.model';
+import type { Profile } from './profile.model';
 
-/** Guarda y lee el perfil del usuario en el dispositivo. */
+/** Saves and reads the user profile on the device. */
 @Injectable({ providedIn: 'root' })
-export class PerfilService {
-  private readonly almacenamiento = inject(AlmacenamientoService);
+export class ProfileService {
+  private readonly storage = inject(StorageService);
 
-  async guardar(perfil: Perfil): Promise<void> {
-    await this.almacenamiento.guardar(ClavesAlmacenamiento.perfil, perfil);
+  async save(profile: Profile): Promise<void> {
+    await this.storage.set(StorageKeys.profile, profile);
   }
 
   /**
-   * Devuelve el perfil guardado (normalizado a listas). Si encuentra el
-   * formato viejo con texto separado por comas, lo migra y lo vuelve a
-   * guardar.
+   * Returns current stored profile (normalized with arrays).
+   * If legacy comma-separated string format is detected, migrates and re-saves it.
    */
-  async perfilActual(): Promise<Perfil | null> {
-    const bruto = await this.almacenamiento.leer<unknown>(ClavesAlmacenamiento.perfil, null);
-    const perfil = normalizarPerfil(bruto);
-    if (perfil && esFormatoViejo(bruto)) {
-      await this.guardar(perfil);
+  async getCurrentProfile(): Promise<Profile | null> {
+    const raw = await this.storage.get<unknown>(StorageKeys.profile, null);
+    const profile = normalizeProfile(raw);
+    if (profile && isLegacyFormat(raw)) {
+      await this.save(profile);
     }
-    return perfil;
+    return profile;
+  }
+
+  async getNationality(): Promise<string | null> {
+    const profile = await this.getCurrentProfile();
+    return profile?.nationality ?? null;
+  }
+
+  async guardar(perfil: Profile): Promise<void> {
+    return this.save(perfil);
+  }
+
+  async perfilActual(): Promise<Profile | null> {
+    return this.getCurrentProfile();
   }
 
   async nacionalidad(): Promise<string | null> {
-    return (await this.perfilActual())?.nacionalidad || null;
+    return this.getNationality();
   }
 }

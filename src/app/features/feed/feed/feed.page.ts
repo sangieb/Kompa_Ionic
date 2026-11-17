@@ -19,28 +19,28 @@ import { add } from 'ionicons/icons';
 import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { MensajeService } from '../../../core/mensaje/mensaje.service';
-import { PerfilService } from '../../../core/perfil/perfil.service';
-import { formatearFechaHora } from '../../../shared/utils/fechas';
-import { primerMensajeError } from '../../../shared/utils/formularios';
-import type { ReglaMensaje } from '../../../shared/utils/formularios';
-import { requeridoConContenido } from '../../../shared/utils/validadores';
-import type { Publicacion } from '../models/publicacion.model';
-import { PublicacionService } from '../publicacion.service';
+import { MessageService } from '../../../core/message/message.service';
+import { ProfileService } from '../../../core/profile/profile.service';
+import { formatDateTime } from '../../../shared/utils/dates';
+import { firstErrorMessage } from '../../../shared/utils/forms';
+import type { MessageRule } from '../../../shared/utils/forms';
+import { requiredWithContent } from '../../../shared/utils/validators';
+import type { Post } from '../models/post.model';
+import { PostService } from '../post.service';
 
-/** Equivale a FeedUiState: Cargando / Exito / Error */
-type EstadoFeed = 'cargando' | 'exito' | 'error';
+export type FeedState = 'loading' | 'success' | 'error' | 'cargando' | 'exito';
+export type EstadoFeed = FeedState;
 
-const MAX_TITULO = 80;
-const MAX_CUERPO = 500;
+const MAX_TITLE = 80;
+const MAX_BODY = 500;
 
-/** Validaciones de la nueva publicación, en el mismo orden que la app original. */
-const ERRORES_FEED: ReglaMensaje[] = [
-  { control: 'titulo', error: 'requerido', mensaje: 'Escribe un título' },
-  { control: 'cuerpo', error: 'requerido', mensaje: 'Escribe un mensaje' },
+const FEED_ERRORS: MessageRule[] = [
+  { control: 'titulo', error: 'required', message: 'Escribe un título' },
+  { control: 'titulo', error: 'requerido', message: 'Escribe un título' },
+  { control: 'cuerpo', error: 'required', message: 'Escribe un mensaje' },
+  { control: 'cuerpo', error: 'requerido', message: 'Escribe un mensaje' },
 ];
 
-/** Feed de publicaciones: basado en FeedActivity.kt, con la opción de publicar */
 @Component({
   selector: 'app-feed',
   templateUrl: './feed.page.html',
@@ -61,87 +61,125 @@ const ERRORES_FEED: ReglaMensaje[] = [
   ],
 })
 export class FeedPage implements OnInit {
-  @ViewChild(IonContent) contenido?: IonContent;
+  @ViewChild(IonContent) content?: IonContent;
+  get contenido(): IonContent | undefined {
+    return this.content;
+  }
 
-  readonly maxTitulo = MAX_TITULO;
-  readonly maxCuerpo = MAX_CUERPO;
+  readonly maxTitle = MAX_TITLE;
+  readonly maxTitulo = MAX_TITLE;
 
-  readonly formulario = new FormGroup({
-    titulo: new FormControl<string>('', { nonNullable: true, validators: [requeridoConContenido] }),
-    cuerpo: new FormControl<string>('', { nonNullable: true, validators: [requeridoConContenido] }),
+  readonly maxBody = MAX_BODY;
+  readonly maxCuerpo = MAX_BODY;
+
+  readonly form = new FormGroup({
+    titulo: new FormControl<string>('', { nonNullable: true, validators: [requiredWithContent] }),
+    cuerpo: new FormControl<string>('', { nonNullable: true, validators: [requiredWithContent] }),
   });
+  readonly formulario = this.form;
 
-  readonly estado = signal<EstadoFeed>('cargando');
-  readonly publicaciones = signal<Publicacion[]>([]);
-  readonly mostrarFormulario = signal(false);
-  readonly publicando = signal(false);
+  readonly state = signal<FeedState>('cargando');
+  readonly estado = this.state;
 
-  private readonly servicio = inject(PublicacionService);
-  private readonly perfilService = inject(PerfilService);
+  readonly posts = signal<Post[]>([]);
+  readonly publicaciones = this.posts;
+
+  readonly showForm = signal(false);
+  readonly mostrarFormulario = this.showForm;
+
+  readonly publishing = signal(false);
+  readonly publicando = this.publishing;
+
+  private readonly postService = inject(PostService);
+  private readonly profileService = inject(ProfileService);
   private readonly auth = inject(AuthService);
-  private readonly mensajes = inject(MensajeService);
+  private readonly messageService = inject(MessageService);
 
   constructor() {
     addIcons({ add });
   }
 
   ngOnInit(): void {
-    void this.cargar();
+    void this.load();
   }
 
-  /** Igual que FeedViewModel.cargar(): primero lo local, luego intenta la API */
-  async cargar(): Promise<void> {
-    this.estado.set('cargando');
-    this.publicaciones.set(await this.servicio.publicacionesLocales());
+  async load(): Promise<void> {
+    this.state.set('cargando');
+    this.posts.set(await this.postService.getLocalPosts());
 
     try {
-      this.publicaciones.set(await firstValueFrom(this.servicio.refrescar()));
-      this.estado.set('exito');
+      this.posts.set(await firstValueFrom(this.postService.refresh()));
+      this.state.set('exito');
     } catch {
-      // Sin conexión o API caída: se mantiene el caché local (offline-first)
-      this.estado.set(this.publicaciones().length > 0 ? 'exito' : 'error');
+      this.state.set(this.posts().length > 0 ? 'exito' : 'error');
     }
+  }
+
+  async cargar(): Promise<void> {
+    return this.load();
+  }
+
+  openForm(): void {
+    this.showForm.set(true);
+    void this.content?.scrollToTop(300);
   }
 
   abrirFormulario(): void {
-    this.mostrarFormulario.set(true);
-    void this.contenido?.scrollToTop(300);
+    this.openForm();
+  }
+
+  cancel(): void {
+    this.form.reset();
+    this.showForm.set(false);
   }
 
   cancelar(): void {
-    this.formulario.reset();
-    this.mostrarFormulario.set(false);
+    this.cancel();
   }
 
-  async publicar(): Promise<void> {
-    const error = primerMensajeError(this.formulario, ERRORES_FEED);
+  async publish(): Promise<void> {
+    const error = firstErrorMessage(this.form, FEED_ERRORS);
     if (error) {
-      await this.mensajes.mostrar(error);
+      await this.messageService.show(error);
       return;
     }
 
-    this.publicando.set(true);
+    this.publishing.set(true);
     try {
-      const { titulo, cuerpo } = this.formulario.getRawValue();
-      await this.servicio.publicar({ titulo: titulo.trim(), cuerpo: cuerpo.trim(), autor: await this.nombreAutor() });
-      this.publicaciones.set(await this.servicio.publicacionesLocales());
-      this.estado.set('exito');
-      this.cancelar();
-      await this.mensajes.mostrar('Publicación compartida');
+      const { titulo, cuerpo } = this.form.getRawValue();
+      await this.postService.publish({
+        title: titulo.trim(),
+        body: cuerpo.trim(),
+        author: await this.getAuthorName(),
+      });
+      this.posts.set(await this.postService.getLocalPosts());
+      this.state.set('exito');
+      this.cancel();
+      await this.messageService.show('Publicación compartida');
     } finally {
-      this.publicando.set(false);
+      this.publishing.set(false);
     }
   }
 
-  fecha(p: Publicacion): string {
-    return p.fechaCreacion != null ? formatearFechaHora(p.fechaCreacion) : '—';
+  async publicar(): Promise<void> {
+    return this.publish();
   }
 
-  /** Nombre del perfil si corresponde a la sesión; si no, el correo */
-  private async nombreAutor(): Promise<string> {
-    const correo = await this.auth.correoActual();
-    const perfil = await this.perfilService.perfilActual();
-    if (perfil?.nombre && perfil.correo === correo) return perfil.nombre;
-    return correo ?? 'Viajero Kompa';
+  date(p: Post): string {
+    const createdAt = p.createdAt ?? p.fechaCreacion;
+    return createdAt != null ? formatDateTime(createdAt) : '—';
+  }
+
+  fecha(p: Post): string {
+    return this.date(p);
+  }
+
+  private async getAuthorName(): Promise<string> {
+    const email = await this.auth.getCurrentEmail();
+    const profile = await this.profileService.getCurrentProfile();
+    const profileName = profile?.name ?? profile?.nombre;
+    const profileEmail = profile?.email ?? profile?.correo;
+    if (profileName && profileEmail === email) return profileName;
+    return email ?? 'Viajero Kompa';
   }
 }

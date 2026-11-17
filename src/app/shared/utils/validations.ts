@@ -1,5 +1,7 @@
-const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function esCorreoValido(correo: string): boolean {
-  return PATRON_CORREO.test(correo);
+export function isValidEmail(email: string): boolean {
+  return EMAIL_PATTERN.test(email);
 }
+
+export const esCorreoValido = isValidEmail;

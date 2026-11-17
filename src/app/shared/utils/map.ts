@@ -1,44 +1,55 @@
 import * as L from 'leaflet';
 
-/** Configuración base del mapa (equivale a ConfigMapa.kt). */
-export const CONFIG_MAPA = {
+/** Default map configuration. */
+export const MAP_CONFIG = {
+  defaultLat: 4.711,
+  defaultLon: -74.0721,
   latDefault: 4.711,
   lonDefault: -74.0721,
   zoom: 14,
 };
 
-/** Fuente principal de teselas: Esri World Street Map. */
-const URL_TESELAS = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+export const CONFIG_MAPA = MAP_CONFIG;
 
-export interface OpcionesMapa {
-  /** Mostrar los controles de zoom (por defecto sí). */
+/** Primary tile source: Esri World Street Map. */
+export const TILES_URL =
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+
+export interface MapOptions {
+  /** Show zoom controls (defaults to true). */
   zoomControl?: boolean;
-  /** Zoom inicial (por defecto CONFIG_MAPA.zoom). */
+  /** Initial zoom level (defaults to MAP_CONFIG.zoom). */
   zoom?: number;
 }
 
-/** Crea el mapa Leaflet centrado en la ubicación por defecto (Bogotá). */
-export function crearMapa(contenedor: HTMLElement, opciones: OpcionesMapa = {}): L.Map {
-  const mapa = L.map(contenedor, { zoomControl: opciones.zoomControl ?? true }).setView(
-    [CONFIG_MAPA.latDefault, CONFIG_MAPA.lonDefault],
-    opciones.zoom ?? CONFIG_MAPA.zoom,
+export type OpcionesMapa = MapOptions;
+
+/** Creates a Leaflet map centered at default coordinates (Bogotá). */
+export function createMap(container: HTMLElement, options: MapOptions = {}): L.Map {
+  const map = L.map(container, { zoomControl: options.zoomControl ?? true }).setView(
+    [MAP_CONFIG.defaultLat, MAP_CONFIG.defaultLon],
+    options.zoom ?? MAP_CONFIG.zoom,
   );
-  crearCapaBase().addTo(mapa);
-  return mapa;
+  createBaseLayer().addTo(map);
+  return map;
 }
 
-export function crearCapaBase(): L.TileLayer {
-  return L.tileLayer(URL_TESELAS, {
+export const crearMapa = createMap;
+
+export function createBaseLayer(): L.TileLayer {
+  return L.tileLayer(TILES_URL, {
     minZoom: 1,
     maxZoom: 19,
     attribution: 'Tiles &copy; Esri',
   });
 }
 
-/** Pin morado (local) o azul (API); los colores vienen de variables.scss. */
-export function crearIconoMarcador(tipo: 'local' | 'api'): L.DivIcon {
+export const crearCapaBase = createBaseLayer;
+
+/** Purple pin (local) or blue pin (API); colors defined in variables.scss. */
+export function createMarkerIcon(type: 'local' | 'api'): L.DivIcon {
   const color =
-    tipo === 'local' ? variableCss('--kompa-marker-local', '#7b2cbf') : variableCss('--kompa-marker-api', '#2f80ed');
+    type === 'local' ? cssVariable('--kompa-marker-local', '#7b2cbf') : cssVariable('--kompa-marker-api', '#2f80ed');
   return L.divIcon({
     className: 'kompa-marcador',
     html: `
@@ -47,20 +58,24 @@ export function crearIconoMarcador(tipo: 'local' | 'api'): L.DivIcon {
         <circle fill="#ffffff" cx="12" cy="12" r="4.5"/>
       </svg>`,
     iconSize: [32, 40],
-    iconAnchor: [16, 40], // la punta del pin
+    iconAnchor: [16, 40],
     popupAnchor: [0, -36],
   });
 }
 
-/** Texto seguro para el globo del marcador. */
-export function crearGlobo(texto: string): HTMLElement {
-  const elemento = document.createElement('strong');
-  elemento.textContent = texto;
-  return elemento;
+export const crearIconoMarcador = createMarkerIcon;
+
+/** Creates a bold element for popup text. */
+export function createPopup(text: string): HTMLElement {
+  const element = document.createElement('strong');
+  element.textContent = text;
+  return element;
 }
 
-/** Lee una variable CSS de :root con un color de respaldo. */
-function variableCss(nombre: string, respaldo: string): string {
-  const valor = getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
-  return valor || respaldo;
+export const crearGlobo = createPopup;
+
+function cssVariable(name: string, fallback: string): string {
+  if (typeof document === 'undefined') return fallback;
+  const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return val || fallback;
 }

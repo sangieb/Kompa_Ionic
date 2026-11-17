@@ -5,100 +5,86 @@ import type { PermissionStatus } from '@capacitor/geolocation';
 import { Geolocation } from '@capacitor/geolocation';
 import { AndroidSettings, IOSSettings, NativeSettings } from 'capacitor-native-settings';
 
-import { MensajeService } from '../mensaje/mensaje.service';
+import { MessageService } from '../message/message.service';
 
-/** Estado de un permiso nativo, igual que PermissionState de Capacitor. */
-export type EstadoPermiso = 'granted' | 'granted-always' | 'limited' | 'denied' | 'prompt' | 'prompt-with-rationale';
+/** Native permission status matching Capacitor's PermissionState. */
+export type PermissionState = 'granted' | 'granted-always' | 'limited' | 'denied' | 'prompt' | 'prompt-with-rationale';
 
-/** Estado simplificado que consumen las pantallas. */
-export type EstadoPermisoUi = 'granted' | 'prompt' | 'denied' | 'servicios-apagados' | 'unavailable';
+export type EstadoPermiso = PermissionState;
 
-/** Código del plugin cuando la ubicación del sistema está apagada. */
-const CODIGO_SERVICIOS_APAGADOS = 'OS-PLUG-GLOC-0007';
+/** Simplified UI permission state. */
+export type PermissionUiState = 'granted' | 'prompt' | 'denied' | 'services-off' | 'servicios-apagados' | 'unavailable';
+export type EstadoPermisoUi = PermissionUiState;
 
-export function permisoConcedido(estado: EstadoPermiso | null | undefined): boolean {
-  // 'limited' es el acceso parcial a fotos de Android 14+: alcanza para elegir.
-  return estado === 'granted' || estado === 'granted-always' || estado === 'limited';
+/** Plugin error code when system location service is disabled. */
+export const SERVICES_OFF_CODE = 'OS-PLUG-GLOC-0007';
+
+export function isPermissionGranted(state: PermissionState | null | undefined): boolean {
+  return state === 'granted' || state === 'granted-always' || state === 'limited';
 }
 
+export const permisoConcedido = isPermissionGranted;
+
 /**
- * Punto único para pedir los permisos nativos de cámara, galería y ubicación.
- *
- * En la web no hay permisos de Android: la cámara/galería abren el selector de
- * archivos y la ubicación la pide el propio navegador, así que allí todo se
- * considera concedido y el permiso real lo gestiona el navegador.
+ * Service managing device permissions (camera, gallery, geolocation).
  */
 @Injectable({ providedIn: 'root' })
-export class PermisosService {
-  private readonly mensajes = inject(MensajeService);
+export class PermissionsService {
+  private readonly messages = inject(MessageService);
 
-  async solicitarCamara(): Promise<boolean> {
-    const estado = await this.pedir(async () => {
+  async requestCamera(): Promise<boolean> {
+    const state = await this.request(async () => {
       return (await Camera.requestPermissions({ permissions: ['camera'] })).camera;
     });
-    return permisoConcedido(estado);
+    return isPermissionGranted(state);
   }
 
-  async solicitarGaleria(): Promise<boolean> {
-    // En Android el selector de galería del sistema no requiere permiso y la
-    // pide (Camera.requestPermissions con alias 'photos') nunca resuelve (bug
-    // conocido de @capacitor/camera). En iOS sí hace falta pedirlos.
+  async requestGallery(): Promise<boolean> {
     if (Capacitor.getPlatform() !== 'ios') return true;
-    const estado = await this.pedir(async () => {
+    const state = await this.request(async () => {
       return (await Camera.requestPermissions({ permissions: ['photos'] })).photos;
     });
-    return permisoConcedido(estado);
+    return isPermissionGranted(state);
   }
 
-  /**
-   * Pide el permiso de ubicación (diálogo del sistema si hace falta).
-   * En Android 12+ alcanza con la ubicación aproximada, así que se acepta
-   * `coarseLocation`: el mapa y las actividades cercanas siguen funcionando.
-   */
-  async solicitarUbicacion(): Promise<boolean> {
+  async requestLocation(): Promise<boolean> {
     if (!Capacitor.isNativePlatform()) return true;
     try {
-      const estado = await Geolocation.checkPermissions();
-      if (permisoConcedido(estado.location) || permisoConcedido(estado.coarseLocation)) return true;
-      if (estado.location === 'denied' && estado.coarseLocation === 'denied') return false;
+      const state = await Geolocation.checkPermissions();
+      if (isPermissionGranted(state.location) || isPermissionGranted(state.coarseLocation)) return true;
+      if (state.location === 'denied' && state.coarseLocation === 'denied') return false;
 
-      const pedido = await Geolocation.requestPermissions();
-      return permisoConcedido(pedido.location) || permisoConcedido(pedido.coarseLocation);
+      const requested = await Geolocation.requestPermissions();
+      return isPermissionGranted(requested.location) || isPermissionGranted(requested.coarseLocation);
     } catch (error) {
-      console.warn('No se pudo solicitar el permiso de ubicación', error);
+      console.warn('Could not request location permission', error);
       return false;
     }
   }
 
-  /**
-   * Consulta la ubicación sin abrir el diálogo del sistema. Distingue los
-   * servicios de ubicación apagados de un permiso que no se pudo consultar.
-   */
-  async estadoUbicacion(): Promise<EstadoPermisoUi> {
-    if (!Capacitor.isNativePlatform()) return this.estadoUbicacionWeb();
+  async locationStatus(): Promise<PermissionUiState> {
+    if (!Capacitor.isNativePlatform()) return this.webLocationStatus();
     try {
-      return simplificarUbicacion(await Geolocation.checkPermissions());
+      return simplifyLocation(await Geolocation.checkPermissions());
     } catch (error) {
-      console.warn('No se pudo verificar el permiso de ubicación', error);
-      return esServiciosApagados(error) ? 'servicios-apagados' : 'unavailable';
+      console.warn('Could not check location permission', error);
+      return isServicesOff(error) ? 'servicios-apagados' : 'unavailable';
     }
   }
 
-  /** Consulta la cámara sin abrir el diálogo del sistema. */
-  async estadoCamara(): Promise<EstadoPermisoUi> {
+  async cameraStatus(): Promise<PermissionUiState> {
     if (!Capacitor.isNativePlatform()) return 'prompt';
     try {
-      return simplificar((await Camera.checkPermissions()).camera);
+      return simplify((await Camera.checkPermissions()).camera);
     } catch (error) {
-      console.warn('No se pudo verificar el permiso de cámara', error);
+      console.warn('Could not check camera permission', error);
       return 'unavailable';
     }
   }
 
-  /** Abre los ajustes de la app para cambiar permisos (nativo). */
-  async abrirAjustesApp(): Promise<void> {
+  async openAppSettings(): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
-      await this.mensajes.mostrar('Abre los ajustes del sitio en tu navegador para cambiar este permiso.');
+      await this.messages.show('Abre los ajustes del sitio en tu navegador para cambiar este permiso.');
       return;
     }
     try {
@@ -107,15 +93,14 @@ export class PermisosService {
         optionIOS: IOSSettings.App,
       });
     } catch (error) {
-      console.warn('No se pudieron abrir los ajustes de la app', error);
-      await this.mensajes.mostrar('Abre Ajustes › Aplicaciones › Kompa › Permisos.');
+      console.warn('Could not open app settings', error);
+      await this.messages.show('Abre Ajustes › Aplicaciones › Kompa › Permisos.');
     }
   }
 
-  /** Abre los ajustes de ubicación del sistema (GPS y modo de precisión). */
-  async abrirAjustesUbicacion(): Promise<void> {
+  async openLocationSettings(): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
-      await this.mensajes.mostrar('Activa la ubicación en los ajustes del navegador o del sistema.');
+      await this.messages.show('Activa la ubicación en los ajustes del navegador o del sistema.');
       return;
     }
     try {
@@ -124,68 +109,95 @@ export class PermisosService {
         optionIOS: IOSSettings.LocationServices,
       });
     } catch (error) {
-      console.warn('No se pudieron abrir los ajustes de ubicación', error);
-      await this.mensajes.mostrar('Activa la ubicación en los ajustes del teléfono.');
+      console.warn('Could not open location settings', error);
+      await this.messages.show('Activa la ubicación en los ajustes del teléfono.');
     }
   }
 
-  /** Como solicitarCamara, pero avisa con un toast si el permiso se niega. */
-  async asegurarCamara(): Promise<boolean> {
-    if (await this.solicitarCamara()) return true;
-    await this.mensajes.mostrar('Sin permiso de cámara. Actívalo en los ajustes del sistema para tomar fotos.');
+  async ensureCamera(): Promise<boolean> {
+    if (await this.requestCamera()) return true;
+    await this.messages.show('Sin permiso de cámara. Actívalo en los ajustes del sistema para tomar fotos.');
     return false;
   }
 
-  /** Como solicitarGaleria, pero avisa con un toast si el permiso se niega. */
-  async asegurarGaleria(): Promise<boolean> {
-    if (await this.solicitarGaleria()) return true;
-    await this.mensajes.mostrar('Sin permiso de galería. Actívalo en los ajustes del sistema para elegir fotos.');
+  async ensureGallery(): Promise<boolean> {
+    if (await this.requestGallery()) return true;
+    await this.messages.show('Sin permiso de galería. Actívalo en los ajustes del sistema para elegir fotos.');
     return false;
   }
 
-  /** Pide un permiso solo en la app nativa; en la web siempre se concede. */
-  private async pedir(accion: () => Promise<EstadoPermiso | undefined>): Promise<EstadoPermiso | null> {
+  private async request(action: () => Promise<PermissionState | undefined>): Promise<PermissionState | null> {
     if (!Capacitor.isNativePlatform()) return 'granted';
     try {
-      return (await accion()) ?? 'denied';
+      return (await action()) ?? 'denied';
     } catch (error) {
-      console.warn('No se pudo pedir un permiso', error);
+      console.warn('Could not request permission', error);
       return 'denied';
     }
   }
 
-  /** En la web se consulta la Permissions API cuando el navegador la ofrece. */
-  private async estadoUbicacionWeb(): Promise<EstadoPermisoUi> {
+  private async webLocationStatus(): Promise<PermissionUiState> {
     if (typeof navigator === 'undefined' || !navigator.permissions?.query) return 'prompt';
     try {
-      const estado = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
-      if (estado.state === 'granted') return 'granted';
-      if (estado.state === 'denied') return 'denied';
+      const state = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+      if (state.state === 'granted') return 'granted';
+      if (state.state === 'denied') return 'denied';
       return 'prompt';
     } catch {
       return 'prompt';
     }
   }
+
+  async solicitarCamara(): Promise<boolean> {
+    return this.requestCamera();
+  }
+
+  async solicitarGaleria(): Promise<boolean> {
+    return this.requestGallery();
+  }
+
+  async solicitarUbicacion(): Promise<boolean> {
+    return this.requestLocation();
+  }
+
+  async estadoUbicacion(): Promise<PermissionUiState> {
+    return this.locationStatus();
+  }
+
+  async estadoCamara(): Promise<PermissionUiState> {
+    return this.cameraStatus();
+  }
+
+  async abrirAjustesApp(): Promise<void> {
+    return this.openAppSettings();
+  }
+
+  async abrirAjustesUbicacion(): Promise<void> {
+    return this.openLocationSettings();
+  }
+
+  async asegurarCamara(): Promise<boolean> {
+    return this.ensureCamera();
+  }
+
+  async asegurarGaleria(): Promise<boolean> {
+    return this.ensureGallery();
+  }
 }
 
-/** Los servicios apagados llegan como error al consultar el permiso. */
-function esServiciosApagados(error: unknown): boolean {
-  return (error as { code?: unknown })?.code === CODIGO_SERVICIOS_APAGADOS;
+function isServicesOff(error: unknown): boolean {
+  return (error as { code?: unknown })?.code === SERVICES_OFF_CODE;
 }
 
-/**
- * La ubicación aproximada es suficiente para Kompa, así que cualquiera de los
- * dos alias concedidos cuenta como permiso activo.
- */
-function simplificarUbicacion(estado: PermissionStatus): EstadoPermisoUi {
-  if (permisoConcedido(estado.location) || permisoConcedido(estado.coarseLocation)) return 'granted';
-  if (estado.location === 'denied' || estado.coarseLocation === 'denied') return 'denied';
+function simplifyLocation(status: PermissionStatus): PermissionUiState {
+  if (isPermissionGranted(status.location) || isPermissionGranted(status.coarseLocation)) return 'granted';
+  if (status.location === 'denied' || status.coarseLocation === 'denied') return 'denied';
   return 'prompt';
 }
 
-function simplificar(estado: EstadoPermiso): EstadoPermisoUi {
-  if (permisoConcedido(estado)) return 'granted';
-  if (estado === 'denied') return 'denied';
-  if (estado === 'prompt' || estado === 'prompt-with-rationale') return 'prompt';
+function simplify(state: PermissionState): PermissionUiState {
+  if (isPermissionGranted(state)) return 'granted';
+  if (state === 'denied') return 'denied';
+  if (state === 'prompt' || state === 'prompt-with-rationale') return 'prompt';
   return 'unavailable';
 }

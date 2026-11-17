@@ -1,14 +1,14 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { RecuperarPage } from './recuperar.page';
+import { RecoverPage } from './recover.page';
 
-describe('RecuperarPage', () => {
-  let component: RecuperarPage;
-  let fixture: ComponentFixture<RecuperarPage>;
+describe('RecoverPage', () => {
+  let component: RecoverPage;
+  let fixture: ComponentFixture<RecoverPage>;
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(RecuperarPage);
+    fixture = TestBed.createComponent(RecoverPage);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

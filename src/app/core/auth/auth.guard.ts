@@ -5,12 +5,12 @@ import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
 /**
- * Solo deja pasar a las rutas privadas (mapa, lista, feed, perfil…) cuando
- * hay una sesión activa; si no, manda al inicio.
+ * Restricts private routes (map, activities, feed, profile) to active sessions.
+ * Redirects to /welcome (or /inicio) when not logged in.
  */
-export const sesionGuard: CanActivateFn = async (): Promise<boolean | UrlTree> => {
+export const authGuard: CanActivateFn = async (): Promise<boolean | UrlTree> => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (await auth.sesionActiva()) return true;
-  return router.parseUrl('/inicio');
+  if (await auth.hasActiveSession()) return true;
+  return router.parseUrl('/welcome');
 };

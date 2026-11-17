@@ -1,48 +1,53 @@
 import { Injectable } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
-/** Resultado de pedir una foto al usuario. */
-export interface FotoResultado {
-  /** Ruta de la imagen para mostrarla, o null si el usuario canceló. */
-  foto: string | null;
-  /** Mensaje de error legible cuando la captura falla (distinto de cancelar). */
+/** Result of a photo request. */
+export interface PhotoResult {
+  photo: string | null;
   error: string | null;
 }
 
+export type FotoResultado = PhotoResult;
+
 /**
- * Único punto para tomar o elegir fotos (cámara y galería). Devuelve webPath;
- * para guardar la imagen en el almacenamiento hay que comprimirla antes
- * (ver comprimirFoto en shared/utils/foto.ts).
+ * Service for capturing or selecting photos from device camera / gallery.
  */
 @Injectable({ providedIn: 'root' })
-export class FotoService {
-  async tomarFoto(): Promise<FotoResultado> {
-    return this.obtener(CameraSource.Camera, 'No se pudo abrir la cámara');
+export class PhotoService {
+  async takePhoto(): Promise<PhotoResult> {
+    return this.acquirePhoto(CameraSource.Camera, 'No se pudo abrir la cámara');
   }
 
-  async elegirDeGaleria(): Promise<FotoResultado> {
-    return this.obtener(CameraSource.Photos, 'No se pudo abrir la galería');
+  async pickFromGallery(): Promise<PhotoResult> {
+    return this.acquirePhoto(CameraSource.Photos, 'No se pudo abrir la galería');
   }
 
-  private async obtener(source: CameraSource, mensajeError: string): Promise<FotoResultado> {
+  private async acquirePhoto(source: CameraSource, errorMessage: string): Promise<PhotoResult> {
     try {
-      const imagen = await Camera.getPhoto({
+      const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
         resultType: CameraResultType.Uri,
         source,
       });
-      return { foto: imagen.webPath ?? null, error: null };
+      return { photo: image.webPath ?? null, error: null };
     } catch (error) {
-      if (esCancelacion(error)) return { foto: null, error: null };
-      console.warn('No se pudo obtener la foto', error);
-      return { foto: null, error: mensajeError };
+      if (isCancellation(error)) return { photo: null, error: null };
+      console.warn('Failed to acquire photo', error);
+      return { photo: null, error: errorMessage };
     }
+  }
+
+  async tomarFoto(): Promise<FotoResultado> {
+    return this.takePhoto();
+  }
+
+  async elegirDeGaleria(): Promise<FotoResultado> {
+    return this.pickFromGallery();
   }
 }
 
-/** Capacitor rechaza con un mensaje que incluye "cancel" cuando se cancela. */
-function esCancelacion(error: unknown): boolean {
-  const mensaje = String((error as { message?: string })?.message ?? error).toLowerCase();
-  return mensaje.includes('cancel');
+function isCancellation(error: unknown): boolean {
+  const message = String((error as { message?: string })?.message ?? error).toLowerCase();
+  return message.includes('cancel');
 }

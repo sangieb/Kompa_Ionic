@@ -2,9 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { Geolocation, type PermissionStatus, type Position } from '@capacitor/geolocation';
 import { vi } from 'vitest';
 
-import { PermisosService } from '../permisos/permisos.service';
+import { PermissionsService } from '../permissions/permissions.service';
 
-import { UbicacionService } from './ubicacion.service';
+import { LocationService } from './location.service';
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: { isNativePlatform: () => true, getPlatform: () => 'android' },
@@ -24,13 +24,13 @@ vi.mock('capacitor-native-settings', () => ({
   NativeSettings: { open: vi.fn() },
 }));
 
-function posicion(latitud: number, longitud: number, precision: number): Position {
+function position(lat: number, lon: number, accuracy: number): Position {
   return {
     timestamp: Date.now(),
     coords: {
-      latitude: latitud,
-      longitude: longitud,
-      accuracy: precision,
+      latitude: lat,
+      longitude: lon,
+      accuracy,
       altitude: null,
       altitudeAccuracy: null,
       speed: null,
@@ -43,104 +43,118 @@ function posicion(latitud: number, longitud: number, precision: number): Positio
   };
 }
 
-function estado(
+function status(
   location: PermissionStatus['location'],
   coarseLocation: PermissionStatus['coarseLocation'],
 ): PermissionStatus {
   return { location, coarseLocation };
 }
 
-describe('UbicacionService', () => {
-  const permisos = {
+describe('LocationService', () => {
+  const permissions = {
+    locationStatus: vi.fn(),
     estadoUbicacion: vi.fn(),
+    requestLocation: vi.fn(),
     solicitarUbicacion: vi.fn(),
   };
 
-  let servicio: UbicacionService;
+  let service: LocationService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    permisos.estadoUbicacion.mockResolvedValue('granted');
-    permisos.solicitarUbicacion.mockResolvedValue(true);
-    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(estado('granted', 'granted'));
+    permissions.locationStatus.mockResolvedValue('granted');
+    permissions.estadoUbicacion.mockResolvedValue('granted');
+    permissions.requestLocation.mockResolvedValue(true);
+    permissions.solicitarUbicacion.mockResolvedValue(true);
+    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(status('granted', 'granted'));
 
     TestBed.configureTestingModule({
-      providers: [UbicacionService, { provide: PermisosService, useValue: permisos }],
+      providers: [LocationService, { provide: PermissionsService, useValue: permissions }],
     });
-    servicio = TestBed.inject(UbicacionService);
+    service = TestBed.inject(LocationService);
   });
 
-  it('devuelve la coordenada cuando la lectura es válida', async () => {
-    vi.mocked(Geolocation.getCurrentPosition).mockResolvedValue(posicion(4.6, -74.08, 25));
+  it('returns coordinate when reading is valid', async () => {
+    vi.mocked(Geolocation.getCurrentPosition).mockResolvedValue(position(4.6, -74.08, 25));
 
-    await expect(servicio.obtenerPosicion()).resolves.toEqual({
-      estado: 'ok',
-      coordenada: { lat: 4.6, lon: -74.08 },
-    });
+    await expect(service.getCurrentPosition()).resolves.toEqual(
+      expect.objectContaining({
+        state: 'ok',
+        coordinate: { lat: 4.6, lon: -74.08 },
+      }),
+    );
   });
 
-  it('pide alta precisión cuando el permiso preciso está concedido', async () => {
-    vi.mocked(Geolocation.getCurrentPosition).mockResolvedValue(posicion(4.6, -74.08, 25));
+  it('requests high accuracy when precise permission is granted', async () => {
+    vi.mocked(Geolocation.getCurrentPosition).mockResolvedValue(position(4.6, -74.08, 25));
 
-    await servicio.obtenerPosicion();
+    await service.getCurrentPosition();
 
     expect(Geolocation.getCurrentPosition).toHaveBeenCalledWith(expect.objectContaining({ enableHighAccuracy: true }));
   });
 
-  it('usa el alias aproximado cuando solo hay permiso coarse', async () => {
-    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(estado('denied', 'granted'));
-    vi.mocked(Geolocation.getCurrentPosition).mockResolvedValue(posicion(4.6, -74.08, 800));
+  it('uses coarse alias when only coarse permission is available', async () => {
+    vi.mocked(Geolocation.checkPermissions).mockResolvedValue(status('denied', 'granted'));
+    vi.mocked(Geolocation.getCurrentPosition).mockResolvedValue(position(4.6, -74.08, 800));
 
-    await expect(servicio.obtenerPosicion()).resolves.toEqual({
-      estado: 'ok',
-      coordenada: { lat: 4.6, lon: -74.08 },
-    });
+    await expect(service.getCurrentPosition()).resolves.toEqual(
+      expect.objectContaining({
+        state: 'ok',
+        coordinate: { lat: 4.6, lon: -74.08 },
+      }),
+    );
     expect(Geolocation.getCurrentPosition).toHaveBeenCalledWith(expect.objectContaining({ enableHighAccuracy: false }));
   });
 
-  it('descarta lecturas fuera de rango', async () => {
-    vi.mocked(Geolocation.getCurrentPosition).mockResolvedValue(posicion(Number.NaN, -74.08, 25));
+  it('discards out of range coordinates', async () => {
+    vi.mocked(Geolocation.getCurrentPosition).mockResolvedValue(position(Number.NaN, -74.08, 25));
 
-    await expect(servicio.obtenerPosicion()).resolves.toEqual({ estado: 'sin-senal', motivo: 'precision' });
+    await expect(service.getCurrentPosition()).resolves.toEqual(
+      expect.objectContaining({ state: 'no-signal', reason: 'accuracy' }),
+    );
   });
 
-  it('descarta lecturas demasiado imprecisas', async () => {
-    vi.mocked(Geolocation.getCurrentPosition).mockResolvedValue(posicion(4.6, -74.08, 5000));
+  it('discards inaccurate readings', async () => {
+    vi.mocked(Geolocation.getCurrentPosition).mockResolvedValue(position(4.6, -74.08, 5000));
 
-    await expect(servicio.obtenerPosicion()).resolves.toEqual({ estado: 'sin-senal', motivo: 'precision' });
+    await expect(service.getCurrentPosition()).resolves.toEqual(
+      expect.objectContaining({ state: 'no-signal', reason: 'accuracy' }),
+    );
   });
 
-  it('clasifica el timeout del plugin como falta de tiempo, no de GPS', async () => {
+  it('classifies plugin timeout as timeout, not gps issue', async () => {
     vi.mocked(Geolocation.getCurrentPosition).mockRejectedValue({ code: 'OS-PLUG-GLOC-0010' });
 
-    await expect(servicio.obtenerPosicion()).resolves.toEqual({ estado: 'sin-senal', motivo: 'tiempo' });
+    await expect(service.getCurrentPosition()).resolves.toEqual(
+      expect.objectContaining({ state: 'no-signal', reason: 'timeout' }),
+    );
   });
 
-  it('distingue los servicios de ubicación apagados', async () => {
+  it('distinguishes location services disabled', async () => {
     vi.mocked(Geolocation.getCurrentPosition).mockRejectedValue({ code: 'OS-PLUG-GLOC-0007' });
 
-    await expect(servicio.obtenerPosicion()).resolves.toEqual({ estado: 'servicios-apagados' });
+    await expect(service.getCurrentPosition()).resolves.toEqual(expect.objectContaining({ state: 'services-off' }));
   });
 
-  it('clasifica un permiso revocado a mitad de la operación', async () => {
+  it('classifies revoked permission during operation', async () => {
     vi.mocked(Geolocation.getCurrentPosition).mockRejectedValue({ code: 'OS-PLUG-GLOC-0003' });
 
-    await expect(servicio.obtenerPosicion()).resolves.toEqual({ estado: 'sin-permiso' });
+    await expect(service.getCurrentPosition()).resolves.toEqual(expect.objectContaining({ state: 'no-permission' }));
   });
 
-  it('no intenta leer la posición si los servicios están apagados', async () => {
-    permisos.estadoUbicacion.mockResolvedValue('servicios-apagados');
+  it('does not attempt position read if services are disabled', async () => {
+    permissions.locationStatus.mockResolvedValue('services-off');
 
-    await expect(servicio.obtenerPosicion()).resolves.toEqual({ estado: 'servicios-apagados' });
+    await expect(service.getCurrentPosition()).resolves.toEqual(expect.objectContaining({ state: 'services-off' }));
     expect(Geolocation.getCurrentPosition).not.toHaveBeenCalled();
   });
 
-  it('pide permiso cuando todavía no está concedido', async () => {
-    permisos.estadoUbicacion.mockResolvedValue('prompt');
-    permisos.solicitarUbicacion.mockResolvedValue(false);
+  it('requests permission when not yet granted', async () => {
+    permissions.locationStatus.mockResolvedValue('prompt');
+    permissions.requestLocation.mockResolvedValue(false);
 
-    await expect(servicio.obtenerPosicion()).resolves.toEqual({ estado: 'sin-permiso' });
-    expect(permisos.solicitarUbicacion).toHaveBeenCalled();
+    await expect(service.getCurrentPosition()).resolves.toEqual(expect.objectContaining({ state: 'no-permission' }));
+    expect(permissions.requestLocation).toHaveBeenCalled();
     expect(Geolocation.getCurrentPosition).not.toHaveBeenCalled();
   });
 });

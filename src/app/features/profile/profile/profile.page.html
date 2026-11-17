@@ -27,7 +27,7 @@
       <p class="subtitulo kompa-texto-gris">Así te ven los demás viajeros de Kompa</p>
     </header>
 
-    <app-perfil-resumen [perfil]="p" [editable]="true" (editarFoto)="cambiarFoto()" />
+    <app-profile-summary [profile]="p" [editable]="true" (editarFoto)="cambiarFoto()" />
 
     <p class="ayuda-foto">
       <ion-icon name="camera-outline" aria-hidden="true"></ion-icon>
@@ -45,7 +45,7 @@
 
       <p class="texto-secundario">{{ consentimientoTexto }}</p>
 
-      <ion-button fill="outline" size="small" class="boton-enlace" (click)="abrirTerminos()">
+      <ion-button fill="outline" size="small" class="boton-enlace" (click)="openTerms()">
         Ver términos y autorización de datos
       </ion-button>
     </section>
@@ -113,5 +113,5 @@
   </div>
   }
 
-  <app-terminos-modal [abierto]="modalTerminosAbierto()" (cerrado)="cerrarTerminos()" />
+  <app-terms-modal [isOpen]="modalTerminosAbierto()" (dismiss)="closeTerms()" />
 </ion-content>

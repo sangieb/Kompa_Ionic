@@ -1,16 +1,16 @@
 /**
- * Ordena una lista por fecha (más reciente primero) y desempata por nombre
- * (ascendente). Siempre devuelve una copia.
+ * Sorts a list by date (most recent first) and breaks ties by name (ascending).
+ * Always returns a copy.
  */
-export function ordenarPorFechaYNombre<T>(
-  lista: T[],
-  claveFecha: (item: T) => number | null,
-  claveNombre: (item: T) => string,
+export function sortByDateAndName<T>(
+  list: T[],
+  dateKey: (item: T) => number | null,
+  nameKey: (item: T) => string,
 ): T[] {
-  return [...lista].sort((a, b) => {
-    const fa = claveFecha(a) ?? -Infinity;
-    const fb = claveFecha(b) ?? -Infinity;
+  return [...list].sort((a, b) => {
+    const fa = dateKey(a) ?? -Infinity;
+    const fb = dateKey(b) ?? -Infinity;
     if (fa !== fb) return fb - fa;
-    return claveNombre(a).localeCompare(claveNombre(b));
+    return nameKey(a).localeCompare(nameKey(b));
   });
 }

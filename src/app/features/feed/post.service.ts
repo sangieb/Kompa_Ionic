@@ -4,14 +4,13 @@ import type { Observable } from 'rxjs';
 import { map, switchMap, from } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { AlmacenamientoService } from '../../core/storage/almacenamiento.service';
-import { ClavesAlmacenamiento } from '../../core/storage/claves';
-import { PUBLICACIONES_EJEMPLO } from '../../data/publicaciones-ejemplo';
-import { ordenarPorFechaYNombre } from '../../shared/utils/ordenar';
+import { StorageKeys } from '../../core/storage/storage-keys';
+import { StorageService } from '../../core/storage/storage.service';
+import { SAMPLE_POSTS } from '../../data/sample-posts';
+import { sortByDateAndName } from '../../shared/utils/sort';
 
-import type { Publicacion } from './models/publicacion.model';
+import type { Post } from './models/post.model';
 
-/** Post de JSONPlaceholder (https://jsonplaceholder.typicode.com). */
 interface PostDto {
   id: number;
   userId: number;
@@ -19,90 +18,109 @@ interface PostDto {
   body: string;
 }
 
-export interface NuevaPublicacion {
-  titulo: string;
-  cuerpo: string;
-  autor: string;
+export interface NewPost {
+  title: string;
+  body: string;
+  author: string;
+  titulo?: string;
+  cuerpo?: string;
+  autor?: string;
 }
 
-const LIMITE_POSTS_API = 20;
+export type NuevaPublicacion = NewPost;
+
+const API_POSTS_LIMIT = 20;
 
 /**
- * Publicaciones del feed: locales del usuario + las que trae la API.
- * Offline-first: todo lo que ya se guardó queda disponible sin conexión.
+ * Feed post management service (offline-first).
  */
 @Injectable({ providedIn: 'root' })
-export class PublicacionService {
+export class PostService {
   private readonly http = inject(HttpClient);
-  private readonly almacenamiento = inject(AlmacenamientoService);
+  private readonly storage = inject(StorageService);
 
-  async publicacionesLocales(): Promise<Publicacion[]> {
-    return ordenar(await this.todas());
+  async getLocalPosts(): Promise<Post[]> {
+    return sortPosts(await this.getAll());
   }
 
-  /** Crea una publicación local y la guarda. */
-  async publicar(datos: NuevaPublicacion): Promise<Publicacion> {
-    const nueva: Publicacion = {
+  async publish(data: NewPost): Promise<Post> {
+    const title = data.title ?? data.titulo ?? '';
+    const body = data.body ?? data.cuerpo ?? '';
+    const author = data.author ?? data.autor ?? '';
+    const newPost: Post = {
       id: crypto.randomUUID(),
-      titulo: datos.titulo,
-      cuerpo: datos.cuerpo,
-      autor: datos.autor,
-      fechaCreacion: Date.now(),
+      title,
+      body,
+      author,
+      createdAt: Date.now(),
       lat: null,
       lon: null,
+      titulo: title,
+      cuerpo: body,
+      autor: author,
+      fechaCreacion: Date.now(),
     };
-    const lista = await this.todas();
-    lista.push(nueva);
-    await this.almacenamiento.guardar(ClavesAlmacenamiento.publicaciones, lista);
-    return nueva;
+    const list = await this.getAll();
+    list.push(newPost);
+    await this.storage.set(StorageKeys.posts, list);
+    return newPost;
   }
 
-  /**
-   * Trae las publicaciones de la API y las combina con las locales.
-   * Es un Observable: la petición solo se hace al suscribirse.
-   */
-  refrescar(): Observable<Publicacion[]> {
-    return this.http.get<PostDto[]>(`${environment.apis.feed}/posts`, { params: { _limit: LIMITE_POSTS_API } }).pipe(
-      map((posts) => posts.map(aPublicacion)),
-      switchMap((deApi) => from(this.guardarDeApi(deApi))),
+  refresh(): Observable<Post[]> {
+    return this.http.get<PostDto[]>(`${environment.apis.feed}/posts`, { params: { _limit: API_POSTS_LIMIT } }).pipe(
+      map((posts) => posts.map(toPost)),
+      switchMap((fromApi) => from(this.saveFromApi(fromApi))),
     );
   }
 
-  /** Inserta o reemplaza por id (como OnConflictStrategy.REPLACE). */
-  private async guardarDeApi(nuevas: Publicacion[]): Promise<Publicacion[]> {
-    const ids = new Set(nuevas.map((p) => p.id));
-    const actuales = await this.todas();
-    await this.almacenamiento.guardar(ClavesAlmacenamiento.publicaciones, [
-      ...actuales.filter((p) => !ids.has(p.id)),
-      ...nuevas,
-    ]);
-    return this.publicacionesLocales();
+  private async saveFromApi(newPosts: Post[]): Promise<Post[]> {
+    const ids = new Set(newPosts.map((p) => p.id));
+    const current = await this.getAll();
+    await this.storage.set(StorageKeys.posts, [...current.filter((p) => !ids.has(p.id)), ...newPosts]);
+    return this.getLocalPosts();
   }
 
-  /** La primera vez siembra las publicaciones de ejemplo. */
-  private async todas(): Promise<Publicacion[]> {
-    return [...(await this.almacenamiento.leerOSembrar(ClavesAlmacenamiento.publicaciones, PUBLICACIONES_EJEMPLO))];
+  async getAll(): Promise<Post[]> {
+    return [...(await this.storage.getOrSeed(StorageKeys.posts, SAMPLE_POSTS))];
+  }
+
+  async publicacionesLocales(): Promise<Post[]> {
+    return this.getLocalPosts();
+  }
+
+  async publicar(datos: NewPost): Promise<Post> {
+    return this.publish(datos);
+  }
+
+  refrescar(): Observable<Post[]> {
+    return this.refresh();
+  }
+
+  async todas(): Promise<Post[]> {
+    return this.getAll();
   }
 }
 
-/** Convierte un post de la API en una publicación del feed. */
-function aPublicacion(post: PostDto): Publicacion {
+function toPost(post: PostDto): Post {
   return {
     id: `api-${post.id}`,
+    title: post.title,
+    body: post.body,
+    author: `Viajero ${post.userId}`,
+    createdAt: null,
+    lat: null,
+    lon: null,
     titulo: post.title,
     cuerpo: post.body,
     autor: `Viajero ${post.userId}`,
     fechaCreacion: null,
-    lat: null,
-    lon: null,
   };
 }
 
-/** ORDER BY fecha_creacion DESC, titulo ASC */
-function ordenar(lista: Publicacion[]): Publicacion[] {
-  return ordenarPorFechaYNombre(
-    lista,
-    (p) => p.fechaCreacion,
-    (p) => p.titulo,
+function sortPosts(list: Post[]): Post[] {
+  return sortByDateAndName(
+    list,
+    (p) => p.createdAt ?? p.fechaCreacion ?? null,
+    (p) => p.title ?? p.titulo ?? '',
   );
 }

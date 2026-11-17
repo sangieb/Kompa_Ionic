@@ -3,44 +3,44 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonToolbar, NavController } from '@ionic/angular';
 
+import { AccountService } from '../../../core/auth/account.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { CuentaService } from '../../../core/auth/cuenta.service';
-import { MensajeService } from '../../../core/mensaje/mensaje.service';
-import { PerfilService } from '../../../core/perfil/perfil.service';
-import { ConsentimientoService } from '../../../core/privacidad/consentimiento.service';
-import { AvionAnimacionComponent } from '../../../shared/components/avion-animacion.component';
-import { RegistroBorradorService } from '../registro-borrador.service';
-import type { BorradorRegistro } from '../registro-borrador.service';
+import { MessageService } from '../../../core/message/message.service';
+import { ConsentService } from '../../../core/privacy/consent.service';
+import { ProfileService } from '../../../core/profile/profile.service';
+import { PlaneAnimationComponent } from '../../../shared/components/plane-animation.component';
+import { RegistrationDraftService } from '../registration-draft.service';
+import type { RegistrationDraft } from '../registration-draft.service';
 
 /** Equivale a ui/perfil/confirmacion/ConfirmacionActivity.kt */
 @Component({
-  selector: 'app-confirmacion',
-  templateUrl: './confirmacion.page.html',
-  styleUrls: ['./confirmacion.page.scss'],
-  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonContent, IonButton, AvionAnimacionComponent],
+  selector: 'app-confirmation',
+  templateUrl: './confirmation.page.html',
+  styleUrls: ['./confirmation.page.scss'],
+  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonContent, IonButton, PlaneAnimationComponent],
 })
-export class ConfirmacionPage implements OnInit {
+export class ConfirmationPage implements OnInit {
   readonly mostrarBoton = signal(false);
   readonly guardando = signal(false);
 
-  private datos: BorradorRegistro | null = null;
+  private datos: RegistrationDraft | null = null;
 
-  private readonly borrador = inject(RegistroBorradorService);
-  private readonly perfilService = inject(PerfilService);
-  private readonly consentimientos = inject(ConsentimientoService);
-  private readonly cuentas = inject(CuentaService);
+  private readonly borrador = inject(RegistrationDraftService);
+  private readonly profileService = inject(ProfileService);
+  private readonly consents = inject(ConsentService);
+  private readonly accounts = inject(AccountService);
   private readonly auth = inject(AuthService);
-  private readonly mensajes = inject(MensajeService);
+  private readonly messages = inject(MessageService);
   private readonly router = inject(Router);
   private readonly navCtrl = inject(NavController);
 
   async ngOnInit(): Promise<void> {
     this.datos = this.borrador.obtener();
-    if (!this.datos || !this.datos.consentimiento.terminos || !this.datos.consentimiento.datos) {
-      await this.router.navigateByUrl('/registro', { replaceUrl: true });
+    if (!this.datos || !this.datos.consent.terms || !this.datos.consent.data) {
+      await this.router.navigateByUrl('/register', { replaceUrl: true });
       return;
     }
-    await this.perfilService.guardar(this.datos.perfil); // persistirPerfil()
+    await this.profileService.save(this.datos.profile); // persistirPerfil()
   }
 
   /** Igual que onFlightCompleted: muestra el botón cuando el avión termina */
@@ -52,16 +52,16 @@ export class ConfirmacionPage implements OnInit {
     if (!this.datos) return;
     this.guardando.set(true);
 
-    const { perfil, credenciales, consentimiento } = this.datos;
+    const { profile, credentials, consent } = this.datos;
     // La aceptación queda registrada con la versión vigente y su fecha.
-    await this.consentimientos.guardar(consentimiento);
-    if (perfil.correo) {
-      await this.cuentas.registrar(perfil.correo, credenciales);
-      await this.auth.crearSesion(perfil.correo);
+    await this.consents.save(consent);
+    if (profile.email) {
+      await this.accounts.register(profile.email, credentials);
+      await this.auth.createSession(profile.email);
     }
     this.borrador.limpiar();
 
-    await this.mensajes.mostrar('¡Bienvenido a Kompa!');
+    await this.messages.show('¡Bienvenido a Kompa!');
     // navigateRoot borra el historial: equivale a FLAG_ACTIVITY_NEW_TASK | CLEAR_TASK
     this.navCtrl.navigateRoot('/home');
   }

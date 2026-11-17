@@ -1,36 +1,36 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import type { Perfil } from '../../../core/perfil/perfil.model';
-import { RegistroBorradorService } from '../registro-borrador.service';
+import type { Profile } from '../../../core/profile/profile.model';
+import { RegistrationDraftService } from '../registration-draft.service';
 
-import { ConfirmacionPage } from './confirmacion.page';
+import { ConfirmationPage } from './confirmation.page';
 
-const PERFIL_PRUEBA: Perfil = {
-  nombre: 'Ana Tester',
-  correo: 'ana@kompa.co',
-  fechaNacimiento: '31/05/2000',
-  nacionalidad: 'Colombiana/o',
-  genero: 'Mujer',
-  conectar: ['Mujeres'],
-  idiomas: ['Español'],
-  intereses: ['Senderismo'],
-  fotoUri: null,
+const PERFIL_PRUEBA: Profile = {
+  name: 'Ana Tester',
+  email: 'ana@kompa.co',
+  birthDate: '31/05/2000',
+  nationality: 'Colombiana/o',
+  gender: 'Mujer',
+  connectWith: ['Mujeres'],
+  languages: ['Español'],
+  interests: ['Senderismo'],
+  photoUri: null,
 };
 
-describe('ConfirmacionPage', () => {
-  let component: ConfirmacionPage;
-  let fixture: ComponentFixture<ConfirmacionPage>;
+describe('ConfirmationPage', () => {
+  let component: ConfirmationPage;
+  let fixture: ComponentFixture<ConfirmationPage>;
 
   beforeEach(() => {
     // Sin borrador la página navega a /registro: se siembran datos de registro.
-    TestBed.inject(RegistroBorradorService).guardar({
-      perfil: PERFIL_PRUEBA,
-      credenciales: { sal: '0011', hash: 'aabb' },
-      consentimiento: { terminos: true, datos: true, fecha: '2026-11-16T10:00:00.000Z' },
+    TestBed.inject(RegistrationDraftService).guardar({
+      profile: PERFIL_PRUEBA,
+      credentials: { salt: '0011', hash: 'aabb' },
+      consent: { terms: true, data: true, date: '2026-11-16T10:00:00.000Z' },
     });
 
-    fixture = TestBed.createComponent(ConfirmacionPage);
+    fixture = TestBed.createComponent(ConfirmationPage);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

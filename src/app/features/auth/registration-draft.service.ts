@@ -1,34 +1,56 @@
 import { Injectable } from '@angular/core';
 
 import type { PasswordHashData } from '../../core/auth/password-hash';
-import type { Perfil } from '../../core/perfil/perfil.model';
-import type { Consentimiento } from '../../core/privacidad/consentimiento.service';
+import type { Consent } from '../../core/privacy/consent.service';
+import type { Profile } from '../../core/profile/profile.model';
 
-export interface BorradorRegistro {
-  perfil: Perfil;
-  /** Contraseña ya hasheada: el texto plano nunca sale del formulario. */
-  credenciales: PasswordHashData;
-  /** Consentimiento expreso recogido en el registro. */
-  consentimiento: Omit<Consentimiento, 'version'>;
+export interface RegistrationDraft {
+  profile: Profile;
+  /** Hashed credentials: plaintext password never leaves the form. */
+  credentials: PasswordHashData;
+  /** Explicit consent collected during registration. */
+  consent: Omit<Consent, 'version'>;
+  perfil?: Profile;
+  credenciales?: PasswordHashData;
+  consentimiento?: Omit<Consent, 'version'>;
 }
 
+export type BorradorRegistro = RegistrationDraft;
+
 /**
- * Lleva los datos del registro a la vista previa y a la confirmación
- * (equivale al Bundle del Intent). Solo vive en memoria, nunca se guarda.
+ * Transfers registration data between steps (form -> preview -> confirmation).
+ * Exists only in memory, never persisted.
  */
 @Injectable({ providedIn: 'root' })
-export class RegistroBorradorService {
-  private borrador: BorradorRegistro | null = null;
+export class RegistrationDraftService {
+  private draft: RegistrationDraft | null = null;
 
-  guardar(borrador: BorradorRegistro): void {
-    this.borrador = borrador;
+  save(draft: RegistrationDraft): void {
+    this.draft = {
+      ...draft,
+      perfil: draft.profile ?? draft.perfil,
+      credenciales: draft.credentials ?? draft.credenciales,
+      consentimiento: draft.consent ?? draft.consentimiento,
+    };
   }
 
-  obtener(): BorradorRegistro | null {
-    return this.borrador;
+  get(): RegistrationDraft | null {
+    return this.draft;
+  }
+
+  clear(): void {
+    this.draft = null;
+  }
+
+  guardar(borrador: RegistrationDraft): void {
+    this.save(borrador);
+  }
+
+  obtener(): RegistrationDraft | null {
+    return this.get();
   }
 
   limpiar(): void {
-    this.borrador = null;
+    this.clear();
   }
 }
