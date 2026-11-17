@@ -77,3 +77,8 @@ Thumbs.db
 
 .agents
 .claude
+
+# Server
+/server/node_modules
+/server/dist
+/server/data
