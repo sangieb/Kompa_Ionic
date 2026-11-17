@@ -3,12 +3,11 @@ import { Component, ViewChild, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { App } from '@capacitor/app';
 import type { PluginListenerHandle } from '@capacitor/core';
-import { AlertController, IonButton, IonContent, IonIcon, NavController } from '@ionic/angular';
+import { IonContent, IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { add, locate, logOutOutline } from 'ionicons/icons';
+import { add, locate } from 'ionicons/icons';
 import * as L from 'leaflet';
 
-import { AuthService } from '../../../core/auth/auth.service';
 import { MensajeService } from '../../../core/mensaje/mensaje.service';
 import type { EstadoPermisoUi } from '../../../core/permisos/permisos.service';
 import { PermisosService } from '../../../core/permisos/permisos.service';
@@ -27,7 +26,7 @@ type TipoAviso = 'none' | 'prompt' | 'denied' | 'servicios-apagados' | 'gps' | '
   selector: 'app-home',
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
-  imports: [IonContent, IonButton, IonIcon, AvisoPermisoComponent, BarraInferiorComponent],
+  imports: [IonContent, IonIcon, AvisoPermisoComponent, BarraInferiorComponent],
 })
 export class HomePage implements OnDestroy {
   @ViewChild('mapa', { static: true }) contenedorMapa!: ElementRef<HTMLDivElement>;
@@ -112,12 +111,9 @@ export class HomePage implements OnDestroy {
   private readonly permisos = inject(PermisosService);
   private readonly mensajes = inject(MensajeService);
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthService);
-  private readonly alertas = inject(AlertController);
-  private readonly navCtrl = inject(NavController);
 
   constructor() {
-    addIcons({ add, locate, logOutOutline });
+    addIcons({ add, locate });
   }
 
   /** Se ejecuta cada vez que la pantalla aparece (como onResume) */
@@ -185,33 +181,8 @@ export class HomePage implements OnDestroy {
     this.avisoDescartado.set(true);
   }
 
-  /** Confirma antes de cerrar sesión para evitar toques accidentales. */
-  async confirmarCierreSesion(): Promise<void> {
-    const alerta = await this.alertas.create({
-      header: 'Cerrar sesión',
-      message: '¿Quieres salir de tu cuenta en este dispositivo?',
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Cerrar sesión',
-          role: 'destructive',
-          handler: () => {
-            void this.salir();
-          },
-        },
-      ],
-    });
-    await alerta.present();
-  }
-
   irANuevaActividad(): void {
     void this.router.navigateByUrl('/nueva-actividad');
-  }
-
-  private async salir(): Promise<void> {
-    await this.auth.logout();
-    // navigateRoot borra el historial: al volver atrás no se entra al home protegido.
-    await this.navCtrl.navigateRoot('/inicio');
   }
 
   private async verificarEstadoUbicacion(centrar: boolean): Promise<void> {

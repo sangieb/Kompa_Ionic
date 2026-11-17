@@ -21,6 +21,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/autenticacion/recuperar/recuperar.page').then((m) => m.RecuperarPage),
   },
   {
+    path: 'restablecer',
+    loadComponent: () => import('./features/autenticacion/restablecer/restablecer.page').then((m) => m.RestablecerPage),
+  },
+  {
     path: 'registro',
     loadComponent: () => import('./features/autenticacion/registro/registro.page').then((m) => m.RegistroPage),
   },
