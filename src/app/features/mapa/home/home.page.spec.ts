@@ -27,9 +27,14 @@ describe('HomePage', () => {
     expect(enlaces.map((enlace) => enlace.textContent?.trim())).toEqual(['Mapa', 'Actividades', 'Feed', 'Perfil']);
   });
 
-  it('no ofrece logout: la sesión se cierra desde el perfil', () => {
-    const boton = fixture.nativeElement.querySelector('ion-button.boton-salir') as HTMLElement | null;
+  it('ofrece cerrar sesión arriba y no duplica el acceso al perfil', () => {
+    const salir = fixture.nativeElement.querySelector('ion-button.boton-salir') as HTMLElement | null;
+    const perfil = fixture.nativeElement.querySelector('ion-button.boton-perfil') as HTMLElement | null;
 
-    expect(boton).toBeNull();
+    expect(salir).not.toBeNull();
+    // Ionic mueve los atributos aria-* del host al botón real dentro del shadow DOM.
+    const botonInterno = salir?.shadowRoot?.querySelector('button');
+    expect(botonInterno?.getAttribute('aria-label')).toBe('Cerrar sesión');
+    expect(perfil).toBeNull();
   });
 });
