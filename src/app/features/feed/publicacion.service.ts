@@ -3,10 +3,10 @@ import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { map, switchMap, from } from 'rxjs';
 
+import { environment } from '../../../environments/environment';
 import { AlmacenamientoService } from '../../core/storage/almacenamiento.service';
 import { ClavesAlmacenamiento } from '../../core/storage/claves';
 import { PUBLICACIONES_EJEMPLO } from '../../data/publicaciones-ejemplo';
-import { environment } from '../../../environments/environment';
 import { ordenarPorFechaYNombre } from '../../shared/utils/ordenar';
 
 import type { Publicacion } from './models/publicacion.model';

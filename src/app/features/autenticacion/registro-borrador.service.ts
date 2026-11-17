@@ -2,11 +2,14 @@ import { Injectable } from '@angular/core';
 
 import type { PasswordHashData } from '../../core/auth/password-hash';
 import type { Perfil } from '../../core/perfil/perfil.model';
+import type { Consentimiento } from '../../core/privacidad/consentimiento.service';
 
 export interface BorradorRegistro {
   perfil: Perfil;
   /** Contraseña ya hasheada: el texto plano nunca sale del formulario. */
   credenciales: PasswordHashData;
+  /** Consentimiento expreso recogido en el registro. */
+  consentimiento: Omit<Consentimiento, 'version'>;
 }
 
 /**

@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { CuentaService } from '../../../core/auth/cuenta.service';
 import { MensajeService } from '../../../core/mensaje/mensaje.service';
 import { PerfilService } from '../../../core/perfil/perfil.service';
+import { ConsentimientoService } from '../../../core/privacidad/consentimiento.service';
 import { AvionAnimacionComponent } from '../../../shared/components/avion-animacion.component';
 import { RegistroBorradorService } from '../registro-borrador.service';
 import type { BorradorRegistro } from '../registro-borrador.service';
@@ -26,6 +27,7 @@ export class ConfirmacionPage implements OnInit {
 
   private readonly borrador = inject(RegistroBorradorService);
   private readonly perfilService = inject(PerfilService);
+  private readonly consentimientos = inject(ConsentimientoService);
   private readonly cuentas = inject(CuentaService);
   private readonly auth = inject(AuthService);
   private readonly mensajes = inject(MensajeService);
@@ -34,7 +36,7 @@ export class ConfirmacionPage implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.datos = this.borrador.obtener();
-    if (!this.datos) {
+    if (!this.datos || !this.datos.consentimiento.terminos || !this.datos.consentimiento.datos) {
       await this.router.navigateByUrl('/registro', { replaceUrl: true });
       return;
     }
@@ -50,7 +52,9 @@ export class ConfirmacionPage implements OnInit {
     if (!this.datos) return;
     this.guardando.set(true);
 
-    const { perfil, credenciales } = this.datos;
+    const { perfil, credenciales, consentimiento } = this.datos;
+    // La aceptación queda registrada con la versión vigente y su fecha.
+    await this.consentimientos.guardar(consentimiento);
     if (perfil.correo) {
       await this.cuentas.registrar(perfil.correo, credenciales);
       await this.auth.crearSesion(perfil.correo);

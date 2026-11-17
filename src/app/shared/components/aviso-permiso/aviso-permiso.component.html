@@ -1,0 +1,30 @@
+<section class="aviso" [class.compacto]="compacto" role="status" aria-live="polite">
+  <div class="icono" aria-hidden="true">
+    <ion-icon [name]="icono"></ion-icon>
+  </div>
+
+  <div class="texto">
+    <h2>{{ titulo }}</h2>
+    <p>{{ mensaje }}</p>
+  </div>
+
+  <button type="button" class="cerrar" aria-label="Ocultar aviso" (click)="cerrar.emit()">
+    <ion-icon name="close" aria-hidden="true"></ion-icon>
+  </button>
+
+  <div class="acciones">
+    @if (accionTexto) {
+      <ion-button size="small" class="accion-principal" [disabled]="cargando" (click)="accion.emit()">
+        @if (cargando) {
+          <ion-spinner name="crescent" slot="start"></ion-spinner>
+        }
+        {{ accionTexto }}
+      </ion-button>
+    }
+    @if (accionSecundariaTexto) {
+      <ion-button size="small" fill="clear" class="accion-secundaria" [disabled]="cargando" (click)="secundaria.emit()">
+        {{ accionSecundariaTexto }}
+      </ion-button>
+    }
+  </div>
+</section>

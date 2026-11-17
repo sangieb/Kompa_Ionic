@@ -1,0 +1,244 @@
+<ion-modal
+  [isOpen]="abierto"
+  (didDismiss)="cerrar()"
+  class="modal-terminos"
+  aria-label="Términos y condiciones y autorización de tratamiento de datos"
+>
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar class="toolbar-blanca">
+        <ion-title class="titulo-modal">
+          <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+          Términos y privacidad
+        </ion-title>
+        <ion-buttons slot="end">
+          <ion-button fill="clear" aria-label="Cerrar términos y privacidad" (click)="cerrar()">
+            <ion-icon slot="icon-only" name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="texto-legal">
+      <p class="vigencia">Versión {{ version }} · Vigente desde el {{ fecha }}</p>
+
+      <p>
+        Estos Términos y Condiciones regulan el uso de Kompa. Al crear una cuenta declaras que los leíste, que eres
+        mayor de edad y que aceptas las reglas de uso y la autorización para el tratamiento de tus datos personales.
+      </p>
+
+      <h2>1. Quiénes somos y cómo contactarnos</h2>
+      <p>
+        Kompa es una aplicación de comunidad para viajeros desarrollada por la {{ responsable.dependencia }} de la
+        Universidad Surcolombiana. El responsable del tratamiento de los datos personales es
+        <strong>{{ responsable.nombre }}</strong
+        >, con domicilio en {{ responsable.direccion }}.
+      </p>
+      <p>
+        Canal de atención y protección de datos:
+        <strong>{{ responsable.correo }}</strong
+        >. Allí puedes presentar consultas, reclamos o solicitudes relacionadas con tus datos personales.
+      </p>
+
+      <h2>2. Qué es Kompa y cuáles son sus límites</h2>
+      <p>
+        Kompa permite crear un perfil, ver actividades y publicaciones, compartir planes y ubicar actividades cerca de
+        ti. Kompa no es una agencia de viajes, no organiza los encuentros y no verifica la identidad de las personas.
+        Los encuentros presenciales ocurren bajo tu responsabilidad: elige lugares públicos, avisa a alguien de
+        confianza y actúa con prudencia.
+      </p>
+      <p>
+        El servicio puede depender de mapas, geocodificación y otras conexiones a internet. Si un permiso o el GPS están
+        desactivados, algunas funciones se limitan, pero el resto de la aplicación sigue disponible.
+      </p>
+
+      <h2>3. Requisitos y uso correcto</h2>
+      <ul>
+        <li>Debes ser mayor de 18 años y proporcionar información veraz y actualizada.</li>
+        <li>La cuenta es personal. No puedes suplantar a otra persona ni compartir tu contraseña.</li>
+        <li>
+          No está permitido publicar contenido ilegal, ofensivo, discriminatorio, engañoso o que vulnere derechos de
+          terceros.
+        </li>
+        <li>
+          No puedes usar Kompa para acosar, hacer spam, recolectar datos de otras personas o promover actividades
+          peligrosas.
+        </li>
+        <li>
+          El contenido que publicas es tuyo, pero autorizas su visualización dentro de la aplicación mientras uses el
+          servicio.
+        </li>
+      </ul>
+
+      <h2>4. Permisos del dispositivo que solicita la app</h2>
+      <p>
+        Kompa solicita permisos únicamente cuando una función los necesita. Puedes rechazarlos o retirarlos en cualquier
+        momento desde los ajustes del teléfono. Ningún permiso es obligatorio para navegar por la app, aunque algunos
+        afectan funciones concretas:
+      </p>
+      <div class="tabla-permisos">
+        <div class="fila encabezado">
+          <span>Permiso</span>
+          <span>Para qué se usa</span>
+          <span>Si lo rechazas</span>
+        </div>
+        <div class="fila">
+          <span>Ubicación</span>
+          <span>Centrar el mapa, mostrar actividades cerca y sugerir lugares al crear una actividad.</span>
+          <span>El mapa usa una ubicación por defecto y no puede centrarse en ti.</span>
+        </div>
+        <div class="fila">
+          <span>Cámara</span>
+          <span>Tomar la foto de tu perfil o de una actividad.</span>
+          <span>Puedes continuar sin foto o elegir una de la galería.</span>
+        </div>
+        <div class="fila">
+          <span>Galería / fotos</span>
+          <span>Elegir una imagen existente para tu perfil o una actividad.</span>
+          <span>Puedes continuar sin foto o tomarla con la cámara.</span>
+        </div>
+        <div class="fila">
+          <span>Internet</span>
+          <span>Cargar mapas, buscar direcciones y consultar el feed.</span>
+          <span>Las funciones que dependen de la red no estarán disponibles.</span>
+        </div>
+        <div class="fila">
+          <span>Almacenamiento local</span>
+          <span>Guardar tu perfil, cuenta, consentimiento y contenido en el dispositivo.</span>
+          <span>No se puede conservar la sesión ni tus datos locales.</span>
+        </div>
+      </div>
+      <p class="nota">Kompa no solicita acceso a contactos, micrófono, llamadas, SMS, salud ni datos biométricos.</p>
+
+      <h2>5. Datos personales que tratamos</h2>
+      <p>Para prestar el servicio tratamos las siguientes categorías de datos:</p>
+      <ul>
+        <li><strong>Identificación y contacto:</strong> nombre completo y correo electrónico.</li>
+        <li><strong>Seguridad de la cuenta:</strong> contraseña almacenada como hash con sal; nunca en texto plano.</li>
+        <li>
+          <strong>Perfil:</strong> fecha de nacimiento (para verificar la mayoría de edad), nacionalidad, idioma,
+          intereses, foto y, si decides informarlo, género.
+        </li>
+        <li>
+          <strong>Uso de la app:</strong> actividades creadas, publicaciones, fecha de creación y ubicación seleccionada
+          o cercana.
+        </li>
+        <li><strong>Consentimiento:</strong> versión y fecha de aceptación de estos documentos.</li>
+      </ul>
+
+      <h2>6. Datos sensibles y datos opcionales</h2>
+      <p>
+        El género puede considerarse un dato sensible. En Kompa es <strong>opcional</strong>: si eliges “Prefiero no
+        decirlo”, la aplicación funciona igual. Si decides informarlo, otorgas tu consentimiento explícito para usarlo
+        únicamente con la finalidad de mostrarlo en tu perfil y ajustar las opciones de conexión. No estás obligado a
+        suministrar datos sensibles para usar el servicio.
+      </p>
+
+      <h2>7. Para qué usamos tus datos</h2>
+      <ul>
+        <li>Crear y administrar tu cuenta, autenticarte y mantener tu sesión.</li>
+        <li>Mostrar tu perfil y permitir que otras personas lo consulten dentro de la app.</li>
+        <li>Ubicar actividades en el mapa, centrar el mapa en tu posición y buscar direcciones.</li>
+        <li>Publicar y mostrar contenido en el feed.</li>
+        <li>Prevenir fraudes, abusos y usos contrarios a estos términos.</li>
+        <li>Atender consultas, reclamos y solicitudes sobre tus datos.</li>
+        <li>Cumplir obligaciones legales y requerimientos de autoridades competentes.</li>
+      </ul>
+      <p>
+        No usamos tus datos para venderlos, para publicidad de terceros ni para finalidades distintas a las aquí
+        informadas.
+      </p>
+
+      <h2>8. Autorización y prueba del consentimiento</h2>
+      <p>
+        De conformidad con la Ley 1581 de 2012 y el Decreto 1377 de 2013, otorgas una autorización previa, expresa e
+        informada para el tratamiento de tus datos con las finalidades descritas. Kompa conserva en el dispositivo la
+        versión y la fecha de tu aceptación como prueba de la autorización.
+      </p>
+      <p>
+        La autorización para datos sensibles, cuando aplique, es independiente y explícita. Puedes revocarla o solicitar
+        la supresión de tus datos en cualquier momento, salvo cuando exista un deber legal o contractual de
+        conservarlos.
+      </p>
+
+      <h2>9. Tus derechos como titular</h2>
+      <p>De acuerdo con el artículo 8 de la Ley 1581 de 2012, puedes:</p>
+      <ul>
+        <li>Conocer, actualizar y rectificar tus datos personales.</li>
+        <li>Solicitar prueba de la autorización otorgada.</li>
+        <li>Ser informado sobre el uso que se ha dado a tus datos.</li>
+        <li>Presentar quejas ante la Superintendencia de Industria y Comercio (SIC) por infracciones a la ley.</li>
+        <li>
+          Revocar la autorización y solicitar la supresión de tus datos cuando no se respeten los principios, derechos y
+          garantías legales.
+        </li>
+        <li>Acceder de forma gratuita a tus datos personales.</li>
+      </ul>
+      <p>
+        Puedes ejercer estos derechos escribiendo a <strong>{{ responsable.correo }}</strong
+        >. Las consultas se atienden en un término máximo de 10 días hábiles y los reclamos en un término máximo de 15
+        días hábiles, conforme a la ley. Antes de acudir a la SIC debes agotar el trámite de consulta o reclamo ante el
+        responsable.
+      </p>
+      <p>
+        También puedes eliminar tu cuenta y los datos guardados en este dispositivo desde
+        <strong>Mi perfil › Eliminar cuenta y datos locales</strong>. Esa acción borra el perfil, la cuenta, las
+        publicaciones, las actividades y el consentimiento almacenados localmente.
+      </p>
+
+      <h2>10. Dónde se guardan los datos y por cuánto tiempo</h2>
+      <p>
+        En esta versión, Kompa guarda los datos en el almacenamiento local de tu dispositivo. No existe un servidor
+        propio de Kompa que reciba tu perfil. Por eso, si desinstalas la app o borras sus datos, la información local se
+        elimina. Los datos se conservan mientras mantengas la cuenta en el dispositivo o hasta que solicites su
+        supresión.
+      </p>
+      <p>
+        Algunas consultas técnicas salen a servicios de terceros: las teselas del mapa las entrega Esri, las búsquedas y
+        coordenadas se envían a OpenStreetMap/Nominatim y el feed de ejemplo se consulta en JSONPlaceholder. Estos
+        servicios reciben datos técnicos como la dirección IP y la consulta o coordenada necesaria para responder; no
+        reciben tu perfil de Kompa. Pueden estar alojados fuera de Colombia, por lo que al usar el mapa y el buscador
+        aceptas esas conexiones técnicas.
+      </p>
+
+      <h2>11. Seguridad</h2>
+      <p>
+        Kompa adopta medidas razonables de seguridad, como el almacenamiento de la contraseña como hash con sal, la
+        separación de datos y el borrado local. Ninguna medida es infalible: protege tu dispositivo y tu contraseña y
+        avísanos si detectas un uso no autorizado.
+      </p>
+
+      <h2>12. Menores de edad</h2>
+      <p>
+        Kompa está dirigida exclusivamente a personas mayores de 18 años. Si detectamos que una cuenta pertenece a un
+        menor, podremos suspenderla y solicitar la eliminación de los datos.
+      </p>
+
+      <h2>13. Cambios a estos documentos</h2>
+      <p>
+        Podemos actualizar estos Términos y la autorización de datos para reflejar cambios legales o del servicio.
+        Cuando el cambio sea sustancial, publicaremos la nueva versión y pediremos una nueva aceptación antes de
+        continuar usando las funciones que la requieran.
+      </p>
+
+      <h2>14. Contacto</h2>
+      <p>
+        {{ responsable.nombre }}<br />
+        {{ responsable.dependencia }}<br />
+        {{ responsable.direccion }}<br />
+        Correo: <strong>{{ responsable.correo }}</strong>
+      </p>
+
+      <p class="pie-legal">
+        Este documento es una base informativa para la aplicación Kompa y debe ser revisado por el área jurídica de la
+        Universidad Surcolombiana antes de su publicación en tiendas de aplicaciones.
+      </p>
+    </ion-content>
+
+    <ion-footer class="ion-no-border">
+      <ion-toolbar class="toolbar-blanca pie-modal">
+        <ion-button expand="block" class="kompa-boton" (click)="cerrar()">Entendido</ion-button>
+      </ion-toolbar>
+    </ion-footer>
+  </ng-template>
+</ion-modal>

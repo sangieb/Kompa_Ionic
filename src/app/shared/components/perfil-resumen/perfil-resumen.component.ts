@@ -1,13 +1,21 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { IonChip, IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { camera } from 'ionicons/icons';
+import {
+  calendarOutline,
+  camera,
+  flagOutline,
+  heartOutline,
+  languageOutline,
+  peopleOutline,
+  personOutline,
+} from 'ionicons/icons';
 
 import type { Perfil } from '../../../core/perfil/perfil.model';
 import { edadDesdeFechaTexto } from '../../utils/fechas';
 
 /**
- * Muestra el resumen de un perfil (foto, datos y chips). Lo usan la vista
+ * Muestra el resumen de un perfil (portada, datos y chips). Lo usan la vista
  * previa del registro y la página de perfil.
  *
  * Con `editable` el avatar se vuelve un botón que avisa al consumidor (página
@@ -28,16 +36,28 @@ export class PerfilResumenComponent {
   @Output() editarFoto = new EventEmitter<void>();
 
   constructor() {
-    addIcons({ camera });
+    addIcons({ camera, calendarOutline, flagOutline, personOutline, peopleOutline, languageOutline, heartOutline });
   }
 
   /** "31/05/2000 (25 años)" o solo la fecha si no se puede calcular la edad. */
   get nacimiento(): string {
-    const edad = edadDesdeFechaTexto(this.perfil.fechaNacimiento);
+    const edad = this.edad;
     return edad !== null ? `${this.perfil.fechaNacimiento} (${edad} años)` : this.perfil.fechaNacimiento;
+  }
+
+  get edad(): number | null {
+    return edadDesdeFechaTexto(this.perfil.fechaNacimiento);
   }
 
   get conectar(): string {
     return this.perfil.conectar.join(', ');
+  }
+
+  get idiomas(): number {
+    return this.perfil.idiomas.length;
+  }
+
+  get intereses(): number {
+    return this.perfil.intereses.length;
   }
 }

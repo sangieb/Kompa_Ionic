@@ -1,5 +1,5 @@
 import type { ElementRef, OnDestroy } from '@angular/core';
-import { Component, ViewChild, inject, signal } from '@angular/core';
+import { Component, ViewChild, computed, inject, signal } from '@angular/core';
 import type { ValidatorFn } from '@angular/forms';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -16,16 +16,18 @@ import {
   NavController,
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { camera, imageOutline, images, search } from 'ionicons/icons';
+import { camera, imageOutline, images, locateOutline, search } from 'ionicons/icons';
 import * as L from 'leaflet';
 
 import { FotoOpcionesService } from '../../../core/foto/foto-opciones.service';
 import { FotoService } from '../../../core/foto/foto.service';
 import { MensajeService } from '../../../core/mensaje/mensaje.service';
 import { PerfilService } from '../../../core/perfil/perfil.service';
+import type { EstadoPermisoUi } from '../../../core/permisos/permisos.service';
 import { PermisosService } from '../../../core/permisos/permisos.service';
+import type { Coordenada, ResultadoUbicacion } from '../../../core/ubicacion/ubicacion.service';
 import { UbicacionService } from '../../../core/ubicacion/ubicacion.service';
-import type { Coordenada } from '../../../core/ubicacion/ubicacion.service';
+import { AvisoPermisoComponent } from '../../../shared/components/aviso-permiso/aviso-permiso.component';
 import { fechaHoraLocalAhora } from '../../../shared/utils/fechas';
 import { primerMensajeError } from '../../../shared/utils/formularios';
 import type { ReglaMensaje } from '../../../shared/utils/formularios';
@@ -72,6 +74,7 @@ const ubicacionRequerida: ValidatorFn = (control) => {
     IonButton,
     IonIcon,
     ReactiveFormsModule,
+    AvisoPermisoComponent,
   ],
 })
 export class NuevaActividadPage implements OnDestroy {
@@ -98,6 +101,16 @@ export class NuevaActividadPage implements OnDestroy {
   readonly fotoUri = signal<string | null>(null); // webPath para la vista previa
   readonly guardando = signal(false);
   readonly buscando = signal(false);
+  readonly estadoUbicacion = signal<EstadoPermisoUi>('prompt');
+  readonly solicitandoUbicacion = signal(false);
+  readonly avisoUbicacionDescartado = signal(false);
+
+  /** Solo se muestra un aviso cuando el permiso está bloqueado o no se puede consultar. */
+  readonly mostrarAvisoUbicacion = computed(
+    () =>
+      !this.avisoUbicacionDescartado() &&
+      (this.estadoUbicacion() === 'denied' || this.estadoUbicacion() === 'unavailable'),
+  );
 
   private posicionDispositivo: Coordenada | null = null;
   private mapa?: L.Map;
@@ -114,15 +127,15 @@ export class NuevaActividadPage implements OnDestroy {
   private readonly navCtrl = inject(NavController);
 
   constructor() {
-    addIcons({ camera, images, search, imageOutline });
+    addIcons({ camera, images, search, imageOutline, locateOutline });
   }
 
-  ionViewDidEnter(): void {
+  async ionViewDidEnter(): Promise<void> {
     if (!this.mapa) {
       this.mapa = crearMapa(this.contenedorMapa.nativeElement, { zoom: 15 });
       // Igual que singleTapConfirmedHelper(): tocar el mapa fija la ubicación
       this.mapa.on('click', (e: L.LeafletMouseEvent) => this.alTocarMapa(e.latlng.lat, e.latlng.lng));
-      void this.centrarEnDispositivoSiHayPermiso();
+      await this.actualizarEstadoUbicacion(true);
     }
     this.mapa.invalidateSize();
   }
@@ -162,12 +175,60 @@ export class NuevaActividadPage implements OnDestroy {
 
   // ---------- Mapa y ubicación ----------
 
-  private async centrarEnDispositivoSiHayPermiso(): Promise<void> {
-    if (!(await this.permisos.verificarUbicacion())) return;
-    const posicion = await this.ubicacion.posicionActual();
-    if (!posicion) return; // sin permiso o sin señal: el mapa se queda en Bogotá
-    this.posicionDispositivo = posicion;
-    this.mapa?.flyTo([posicion.lat, posicion.lon], 15);
+  /** Acción explícita: pide el permiso y centra el mapa si se concede. */
+  async usarMiUbicacion(): Promise<void> {
+    if (this.solicitandoUbicacion()) return;
+    this.solicitandoUbicacion.set(true);
+    const resultado = await this.ubicacion.obtenerPosicion();
+    this.solicitandoUbicacion.set(false);
+    await this.aplicarUbicacion(resultado, true);
+  }
+
+  alAccionAvisoUbicacion(): void {
+    if (this.estadoUbicacion() === 'denied') {
+      void this.permisos.abrirAjustesApp();
+      return;
+    }
+    void this.usarMiUbicacion();
+  }
+
+  get accionAvisoUbicacion(): string {
+    return this.estadoUbicacion() === 'denied' ? 'Abrir ajustes' : 'Reintentar';
+  }
+
+  descartarAvisoUbicacion(): void {
+    this.avisoUbicacionDescartado.set(true);
+  }
+
+  private async actualizarEstadoUbicacion(centrar: boolean): Promise<void> {
+    const estado = await this.permisos.estadoUbicacion();
+    this.estadoUbicacion.set(estado);
+    // Sin permiso no se insiste: la actividad se puede ubicar tocando el mapa.
+    if (estado !== 'granted' || !centrar) return;
+    await this.aplicarUbicacion(await this.ubicacion.obtenerPosicion(), false);
+  }
+
+  private async aplicarUbicacion(resultado: ResultadoUbicacion, avisar: boolean): Promise<void> {
+    if (resultado.estado === 'ok') {
+      this.estadoUbicacion.set('granted');
+      this.avisoUbicacionDescartado.set(false);
+      this.posicionDispositivo = resultado.coordenada;
+      this.mapa?.flyTo([resultado.coordenada.lat, resultado.coordenada.lon], 15);
+      return;
+    }
+
+    if (resultado.estado === 'sin-permiso') {
+      this.estadoUbicacion.set(await this.permisos.estadoUbicacion());
+      this.avisoUbicacionDescartado.set(false);
+      if (avisar) {
+        await this.mensajes.mostrar('Sin permiso de ubicación. Puedes tocar el mapa para fijar la actividad.');
+      }
+      return;
+    }
+
+    if (avisar) {
+      await this.mensajes.mostrar('No pudimos obtener tu ubicación. Revisa el GPS o toca el mapa para fijarla.');
+    }
   }
 
   private async alTocarMapa(lat: number, lon: number): Promise<void> {

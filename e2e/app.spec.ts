@@ -21,3 +21,18 @@ test('sin sesión, las rutas privadas devuelven al inicio', async ({ page }) => 
   await page.goto('/home');
   await expect(page).toHaveURL(/\/inicio$/);
 });
+
+test('el registro muestra el consentimiento y abre el documento legal', async ({ page }) => {
+  await page.goto('/registro');
+
+  await expect(page.getByRole('heading', { name: 'Antes de continuar' })).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('ion-checkbox')).toHaveCount(2);
+
+  await page.getByRole('button', { name: 'Leer Términos y Condiciones y autorización de datos' }).click();
+
+  await expect(page.getByText('Términos y privacidad')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('facingenieria@usco.edu.co').first()).toBeVisible();
+
+  await page.getByRole('button', { name: 'Entendido' }).click();
+  await expect(page.getByText('Términos y privacidad')).toBeHidden();
+});

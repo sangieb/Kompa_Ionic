@@ -30,4 +30,14 @@
   --kompa-gray-text: #6b6b6b;
   --kompa-marker-local: #7b2cbf;
   --kompa-marker-api: #2f80ed;
+
+  // Tokens visuales compartidos (degradados, sombras, radios y bordes)
+  --kompa-gradiente: linear-gradient(135deg, #4a0e7a 0%, #7b2cbf 58%, #9d4edd 100%);
+  --kompa-gradiente-suave: linear-gradient(135deg, #f5ebff 0%, #ffffff 100%);
+  --kompa-superficie: #ffffff;
+  --kompa-borde: #eadcf8;
+  --kompa-sombra-suave: 0 2px 10px rgba(74, 14, 122, 0.08);
+  --kompa-sombra-media: 0 10px 30px rgba(74, 14, 122, 0.16);
+  --kompa-radio-md: 14px;
+  --kompa-radio-lg: 22px;
 }

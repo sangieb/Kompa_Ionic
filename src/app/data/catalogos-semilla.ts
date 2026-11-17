@@ -38,8 +38,8 @@ export const CATALOGOS_SEMILLA: Catalogos = {
   idiomas: ['Español', 'Inglés', 'Portugués', 'Francés', 'Alemán', 'Italiano', 'Otro'],
 };
 
-/** Opciones del género en el registro. */
-export const GENEROS = ['Mujer', 'Hombre', 'No binario', 'Prefiero describirlo'] as const;
+/** Opciones del género en el registro. Es un dato opcional. */
+export const GENEROS = ['Mujer', 'Hombre', 'No binario', 'Prefiero describirlo', 'Prefiero no decirlo'] as const;
 
 /** Opciones de "¿con quién quieres conectar?" en el registro. */
 export const OPCIONES_CONECTAR = ['Mujeres', 'Hombres', 'Todes'] as const;

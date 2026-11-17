@@ -1,0 +1,8 @@
+<nav class="barra" aria-label="Navegación principal">
+  @for (pestana of pestanas; track pestana.ruta) {
+    <a class="pestana" [routerLink]="pestana.ruta" routerLinkActive="activa" [ariaCurrentWhenActive]="'page'">
+      <ion-icon [name]="pestana.icono" aria-hidden="true"></ion-icon>
+      <span>{{ pestana.etiqueta }}</span>
+    </a>
+  }
+</nav>

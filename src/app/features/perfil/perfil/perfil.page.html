@@ -3,30 +3,115 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" text=""></ion-back-button>
     </ion-buttons>
-    <ion-title class="titulo">Mi perfil</ion-title>
+    <ion-title class="titulo-barra">Mi perfil</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
   @if (cargando()) {
-  <div class="centro">
-    <ion-spinner color="primary"></ion-spinner>
+  <div class="contenedor">
+    <div class="esqueleto">
+      <ion-skeleton-text class="esqueleto-portada" animated></ion-skeleton-text>
+      <ion-skeleton-text class="esqueleto-linea corta" animated></ion-skeleton-text>
+      <ion-skeleton-text class="esqueleto-linea" animated></ion-skeleton-text>
+      <ion-skeleton-text class="esqueleto-linea" animated></ion-skeleton-text>
+    </div>
+    <div class="centro-carga">
+      <ion-spinner color="primary"></ion-spinner>
+    </div>
   </div>
   } @else if (perfil(); as p) {
-  <div class="contenido">
-    <h1 class="titulo">Tu perfil</h1>
-    <p class="subtitulo kompa-texto-gris">Así te ven los demás viajeros</p>
+  <div class="contenedor">
+    <header class="encabezado">
+      <h1 class="titulo">Tu perfil</h1>
+      <p class="subtitulo kompa-texto-gris">Así te ven los demás viajeros de Kompa</p>
+    </header>
 
     <app-perfil-resumen [perfil]="p" [editable]="true" (editarFoto)="cambiarFoto()" />
 
-    <p class="ayuda-foto">Toca la foto para cambiarla</p>
+    <p class="ayuda-foto">
+      <ion-icon name="camera-outline" aria-hidden="true"></ion-icon>
+      Toca la foto para cambiarla
+    </p>
 
-    <ion-button expand="block" class="kompa-boton boton-salir" (click)="cerrarSesion()"> Cerrar sesión </ion-button>
+    <!-- Privacidad y consentimiento -->
+    <section class="tarjeta" aria-labelledby="titulo-privacidad">
+      <h2 id="titulo-privacidad" class="kompa-seccion-titulo">
+        <span class="icono-seccion" aria-hidden="true">
+          <ion-icon name="shield-checkmark-outline"></ion-icon>
+        </span>
+        Privacidad y datos
+      </h2>
+
+      <p class="texto-secundario">{{ consentimientoTexto }}</p>
+
+      <ion-button fill="outline" size="small" class="boton-enlace" (click)="abrirTerminos()">
+        Ver términos y autorización de datos
+      </ion-button>
+    </section>
+
+    <!-- Permisos del dispositivo -->
+    <section class="tarjeta" aria-labelledby="titulo-permisos">
+      <h2 id="titulo-permisos" class="kompa-seccion-titulo">
+        <span class="icono-seccion" aria-hidden="true">
+          <ion-icon name="location-outline"></ion-icon>
+        </span>
+        Permisos del dispositivo
+      </h2>
+      <p class="texto-secundario">
+        Puedes cambiar estos permisos cuando quieras. Si los desactivas, Kompa sigue funcionando con menos funciones.
+      </p>
+
+      <div class="permiso">
+        <div class="permiso-texto">
+          <strong>Ubicación</strong>
+          <span class="estado" [class.activo]="estadoUbicacion() === 'granted'">{{ estadoUbicacionTexto }}</span>
+        </div>
+        @if (estadoUbicacion() !== 'granted') {
+        <ion-button size="small" fill="outline" class="boton-enlace" (click)="gestionarUbicacion()">
+          {{ accionUbicacion }}
+        </ion-button>
+        }
+      </div>
+
+      <div class="permiso">
+        <div class="permiso-texto">
+          <strong>Cámara</strong>
+          <span class="estado" [class.activo]="estadoCamara() === 'granted'">{{ estadoCamaraTexto }}</span>
+        </div>
+        @if (estadoCamara() !== 'granted') {
+        <ion-button size="small" fill="outline" class="boton-enlace" (click)="gestionarCamara()">
+          {{ accionCamara }}
+        </ion-button>
+        }
+      </div>
+    </section>
+
+    <!-- Cuenta -->
+    <section class="tarjeta tarjeta-cuenta" aria-labelledby="titulo-cuenta">
+      <h2 id="titulo-cuenta" class="kompa-seccion-titulo">Cuenta</h2>
+
+      <ion-button expand="block" fill="outline" class="kompa-boton boton-salir" (click)="cerrarSesion()">
+        Cerrar sesión
+      </ion-button>
+
+      <button type="button" class="boton-peligro" (click)="eliminarCuenta()">Eliminar cuenta y datos locales</button>
+      <p class="nota-peligro">
+        Borra tu perfil, cuenta, publicaciones, actividades y consentimiento guardados en este dispositivo. No se puede
+        deshacer.
+      </p>
+    </section>
   </div>
   } @else {
-  <div class="centro sin-perfil">
-    <p class="kompa-texto-gris">Todavía no tienes un perfil</p>
+  <div class="contenedor centro-vacio">
+    <div class="vacio-icono" aria-hidden="true">
+      <ion-icon name="person-outline"></ion-icon>
+    </div>
+    <h1 class="titulo">Todavía no tienes un perfil</h1>
+    <p class="subtitulo kompa-texto-gris">Crea tu cuenta para empezar a conectar con otros viajeros.</p>
     <ion-button expand="block" class="kompa-boton boton-crear" (click)="irARegistro()">Crear cuenta</ion-button>
   </div>
   }
+
+  <app-terminos-modal [abierto]="modalTerminosAbierto()" (cerrado)="cerrarTerminos()" />
 </ion-content>

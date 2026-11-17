@@ -21,7 +21,7 @@ import {
   IonToolbar,
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { add, camera } from 'ionicons/icons';
+import { add, camera, shieldCheckmarkOutline } from 'ionicons/icons';
 
 import { MIN_PASSWORD_LEN } from '../../../core/auth/auth.service';
 import { hashPassword } from '../../../core/auth/password-hash';
@@ -31,6 +31,7 @@ import { MensajeService } from '../../../core/mensaje/mensaje.service';
 import { PermisosService } from '../../../core/permisos/permisos.service';
 import type { Catalogos } from '../../../data/catalogos-semilla';
 import { GENEROS, OPCIONES_CONECTAR } from '../../../data/catalogos-semilla';
+import { TerminosModalComponent } from '../../../shared/components/terminos-modal/terminos-modal.component';
 import { isoAFecha, isoHaceAnios } from '../../../shared/utils/fechas';
 import { primerMensajeError } from '../../../shared/utils/formularios';
 import type { ReglaMensaje } from '../../../shared/utils/formularios';
@@ -63,10 +64,10 @@ const ERRORES_REGISTRO: ReglaMensaje[] = [
   { control: 'fechaNacimiento', error: 'mayorDeEdad', mensaje: 'Debes ser mayor de edad para registrarte' },
   { control: 'nacionalidad', error: 'requerido', mensaje: 'Selecciona tu nacionalidad' },
   { control: 'idioma', error: 'requerido', mensaje: 'Selecciona al menos un idioma' },
-  { control: 'genero', error: 'requerido', mensaje: 'Selecciona tu género' },
   { control: '', error: 'conectarRequerido', mensaje: 'Selecciona con quién quieres conectar' },
   { control: '', error: 'interesesRequeridos', mensaje: 'Elige al menos un interés' },
-  { control: 'aceptaDatos', error: 'requerido', mensaje: 'Debes aceptar el tratamiento de datos' },
+  { control: 'aceptaTerminos', error: 'requerido', mensaje: 'Debes aceptar los Términos y Condiciones' },
+  { control: 'aceptaDatos', error: 'requerido', mensaje: 'Debes autorizar el tratamiento de tus datos personales' },
 ];
 
 /** Debe elegir con quién conectar (chips del formulario). */
@@ -103,6 +104,7 @@ const interesesRequeridos: ValidatorFn = (control) => {
     IonButton,
     IonIcon,
     ReactiveFormsModule,
+    TerminosModalComponent,
   ],
 })
 export class RegistroPage implements OnInit {
@@ -128,9 +130,11 @@ export class RegistroPage implements OnInit {
       }),
       nacionalidad: new FormControl<string>('', { nonNullable: true, validators: [requeridoConContenido] }),
       idioma: new FormControl<string>('', { nonNullable: true, validators: [requeridoConContenido] }),
-      genero: new FormControl<string>('', { nonNullable: true, validators: [requeridoConContenido] }),
+      // El género es opcional: la persona puede no informarlo.
+      genero: new FormControl<string>('', { nonNullable: true }),
       conectar: new FormControl<string[]>([], { nonNullable: true }),
       intereses: new FormControl<string[]>([], { nonNullable: true }),
+      aceptaTerminos: new FormControl<boolean>(false, { nonNullable: true, validators: [aceptadoRequerido] }),
       aceptaDatos: new FormControl<boolean>(false, { nonNullable: true, validators: [aceptadoRequerido] }),
     },
     { validators: [conectarRequerido, interesesRequeridos] },
@@ -139,6 +143,7 @@ export class RegistroPage implements OnInit {
   readonly catalogos = signal<Catalogos>({ nacionalidades: [], idiomas: [], intereses: [] });
   readonly cargando = signal(true);
   readonly fotoUri = signal<string | null>(null);
+  readonly modalTerminosAbierto = signal(false);
 
   private readonly catalogoService = inject(CatalogoService);
   private readonly mensajes = inject(MensajeService);
@@ -149,7 +154,7 @@ export class RegistroPage implements OnInit {
   private readonly router = inject(Router);
 
   constructor() {
-    addIcons({ camera, add });
+    addIcons({ camera, add, shieldCheckmarkOutline });
   }
 
   async ngOnInit(): Promise<void> {
@@ -203,10 +208,22 @@ export class RegistroPage implements OnInit {
     this.formulario.controls.intereses.setValue([...elegidos, interes]);
   }
 
+  abrirTerminos(): void {
+    this.modalTerminosAbierto.set(true);
+  }
+
+  cerrarTerminos(): void {
+    this.modalTerminosAbierto.set(false);
+  }
+
   async crearCuenta(): Promise<void> {
     const error = primerMensajeError(this.formulario, ERRORES_REGISTRO);
     if (error) {
       await this.mensajes.mostrar(error);
+      // Si falta aceptar, mostramos el documento para que la decisión sea informada.
+      if (this.formulario.controls.aceptaTerminos.invalid || this.formulario.controls.aceptaDatos.invalid) {
+        this.modalTerminosAbierto.set(true);
+      }
       return;
     }
 
@@ -225,6 +242,12 @@ export class RegistroPage implements OnInit {
       },
       // La contraseña se hashea aquí: el texto plano no sale del formulario.
       credenciales: await hashPassword(datos.password),
+      // La fecha de la aceptación se conserva como prueba del consentimiento.
+      consentimiento: {
+        terminos: datos.aceptaTerminos,
+        datos: datos.aceptaDatos,
+        fecha: new Date().toISOString(),
+      },
     });
     await this.router.navigateByUrl('/perfil-preview');
   }

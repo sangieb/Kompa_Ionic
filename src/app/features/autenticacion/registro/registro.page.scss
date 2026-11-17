@@ -84,6 +84,18 @@
   font-weight: bold;
 }
 
+.opcional {
+  color: var(--kompa-gray-text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ayuda-campo {
+  margin: -2px 0 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .radio {
   display: block;
   margin: 8px 0;
@@ -113,25 +125,84 @@ ion-chip.seleccionado {
   font-size: 12px;
 }
 
-/* ---- Final ---- */
-.boton-crear {
-  margin-top: 32px;
+/* ---- Consentimiento informado ---- */
+.consentimiento {
+  margin-top: 28px;
+  padding: 16px;
+  border: 1px solid var(--kompa-borde);
+  border-radius: var(--kompa-radio-lg);
+  background: var(--kompa-gradiente-suave);
+}
+
+.titulo-consentimiento {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--ion-color-tertiary);
+  font-size: 16px;
+  font-weight: 700;
+
+  ion-icon {
+    color: var(--ion-color-primary);
+    font-size: 20px;
+  }
+}
+
+.texto-consentimiento {
+  margin: 8px 0 0;
+  color: var(--kompa-gray-text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.enlace-documento {
+  margin: 10px 0 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ion-color-primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 3px solid var(--ion-color-secondary);
+    outline-offset: 2px;
+  }
 }
 
 .acepto {
-  margin-top: 16px;
+  display: block;
+  margin-top: 14px;
+  color: #2b2b2b;
   font-size: 12px;
-  color: var(--kompa-gray-text);
+  line-height: 1.4;
   --checkbox-background-checked: var(--ion-color-primary);
   --border-color-checked: var(--ion-color-primary);
 
   &::part(label) {
     white-space: normal;
+    line-height: 1.4;
   }
 }
 
+.nota-consentimiento {
+  margin: 12px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+/* ---- Final ---- */
+.boton-crear {
+  margin-top: 24px;
+}
+
 .terminos {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   text-align: center;
   font-size: 11px;
+  line-height: 1.4;
 }

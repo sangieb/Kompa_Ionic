@@ -76,6 +76,25 @@
   overflow: hidden;
 }
 
+.fila-ubicacion {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.boton-ubicacion {
+  margin: 0;
+  --border-radius: 18px;
+  --border-color: var(--ion-color-primary);
+  --color: var(--ion-color-primary);
+  text-transform: none;
+}
+
+.aviso-ubicacion {
+  display: block;
+  margin-top: 10px;
+}
+
 .boton-guardar {
   margin-top: 32px;
 }

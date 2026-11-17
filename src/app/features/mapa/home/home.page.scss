@@ -1,4 +1,5 @@
 $arriba: calc(var(--ion-safe-area-top, 0px) + 16px);
+$abajo: calc(var(--ion-safe-area-bottom, 0px) + 80px);
 
 .mapa {
   width: 100%;
@@ -8,7 +9,7 @@ $arriba: calc(var(--ion-safe-area-top, 0px) + 16px);
 // Todo lo que flota sobre el mapa va por encima de Leaflet (z-index 1000)
 .titulo,
 .boton-perfil,
-.boton-flotante,
+.zona-aviso,
 .fabs {
   position: absolute;
   z-index: 1000;
@@ -40,32 +41,18 @@ $arriba: calc(var(--ion-safe-area-top, 0px) + 16px);
   font-size: 18px;
 }
 
-// btn_show_list y btn_show_feed: morados, centrados
-.boton-flotante {
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 0;
-  --background: var(--ion-color-primary);
-  --border-radius: 24px;
-  --padding-start: 24px;
-  --padding-end: 24px;
-  font-size: 15px;
-  font-weight: bold;
-  text-transform: none;
-}
-
-.boton-lista {
+// Aviso de permiso: debajo del título, sin tapar los FAB ni la barra inferior
+.zona-aviso {
   top: calc(var(--ion-safe-area-top, 0px) + 76px);
+  right: 16px;
+  left: 16px;
+  z-index: 1050;
 }
 
-.boton-feed {
-  top: calc(var(--ion-safe-area-top, 0px) + 124px);
-}
-
-// fab_centrar y fab_agregar (fabSize="mini")
+// fab_centrar y fab_agregar, por encima de la barra inferior
 .fabs {
   right: 20px;
-  bottom: calc(var(--ion-safe-area-bottom, 0px) + 24px);
+  bottom: $abajo;
   display: flex;
   flex-direction: column;
   gap: 12px;

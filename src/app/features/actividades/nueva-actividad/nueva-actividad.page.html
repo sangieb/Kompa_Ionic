@@ -45,6 +45,32 @@
     <p class="ayuda kompa-texto-gris">Escribe una dirección o toca el mapa para fijar la ubicación</p>
     <div #mapa class="mapa"></div>
 
+    <div class="fila-ubicacion">
+      <ion-button
+        fill="outline"
+        size="small"
+        class="boton-ubicacion"
+        [disabled]="solicitandoUbicacion()"
+        (click)="usarMiUbicacion()"
+      >
+        <ion-icon slot="start" name="locate-outline"></ion-icon>
+        Usar mi ubicación
+      </ion-button>
+    </div>
+
+    @if (mostrarAvisoUbicacion()) {
+    <app-aviso-permiso
+      class="aviso-ubicacion"
+      [compacto]="true"
+      titulo="Ubicación no disponible"
+      mensaje="Puedes tocar el mapa para fijar la actividad. Si quieres centrarlo en ti, activa la ubicación en los ajustes del teléfono."
+      [accionTexto]="accionAvisoUbicacion"
+      [cargando]="solicitandoUbicacion()"
+      (accion)="alAccionAvisoUbicacion()"
+      (cerrar)="descartarAvisoUbicacion()"
+    />
+    }
+
     <ion-input
       class="campo"
       fill="outline"

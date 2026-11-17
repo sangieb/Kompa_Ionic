@@ -1,0 +1,97 @@
+.aviso {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--kompa-borde);
+  border-radius: 18px;
+  background: var(--kompa-superficie);
+  box-shadow: var(--kompa-sombra-media);
+}
+
+.icono {
+  display: flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--kompa-purple-ultra-light);
+  color: var(--ion-color-primary);
+  font-size: 21px;
+}
+
+.texto {
+  min-width: 0;
+  padding-right: 24px;
+
+  h2 {
+    margin: 0;
+    color: #2b2b2b;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 3px 0 0;
+    color: var(--kompa-gray-text);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+}
+
+.cerrar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--kompa-gray-text);
+  font-size: 18px;
+}
+
+.acciones {
+  display: flex;
+  grid-column: 2;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+
+  ion-button {
+    --border-radius: 18px;
+    margin: 0;
+    text-transform: none;
+  }
+}
+
+.accion-principal {
+  font-weight: 700;
+}
+
+.accion-secundaria {
+  --color: var(--kompa-gray-text);
+}
+
+.compacto {
+  grid-template-columns: auto 1fr;
+  padding: 11px 12px;
+  border-radius: 14px;
+  box-shadow: none;
+
+  .icono {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+
+  .texto h2 {
+    font-size: 13px;
+  }
+}

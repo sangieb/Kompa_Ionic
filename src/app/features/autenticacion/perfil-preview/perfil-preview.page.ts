@@ -23,8 +23,8 @@ export class PerfilPreviewPage implements OnInit {
 
   ngOnInit(): void {
     const datos = this.borrador.obtener();
-    if (!datos) {
-      // Sin datos del registro no hay nada que mostrar
+    if (!datos || !datos.consentimiento.terminos || !datos.consentimiento.datos) {
+      // Sin datos del registro, o sin consentimiento, no se puede continuar.
       void this.router.navigateByUrl('/registro', { replaceUrl: true });
       return;
     }

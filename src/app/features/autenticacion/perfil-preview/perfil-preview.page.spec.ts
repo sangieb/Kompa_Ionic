@@ -27,6 +27,7 @@ describe('PerfilPreviewPage', () => {
     TestBed.inject(RegistroBorradorService).guardar({
       perfil: PERFIL_PRUEBA,
       credenciales: { sal: '0011', hash: 'aabb' },
+      consentimiento: { terminos: true, datos: true, fecha: '2026-11-16T10:00:00.000Z' },
     });
 
     fixture = TestBed.createComponent(PerfilPreviewPage);

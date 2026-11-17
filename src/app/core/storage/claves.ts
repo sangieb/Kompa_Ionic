@@ -5,6 +5,8 @@ export const ClavesAlmacenamiento = {
   sesion: 'sesion',
   actividades: 'actividades',
   publicaciones: 'publicaciones',
+  consentimiento: 'consentimiento',
+  ubicacionSolicitada: 'ubicacionSolicitada',
 } as const;
 
 export type ClaveAlmacenamiento = (typeof ClavesAlmacenamiento)[keyof typeof ClavesAlmacenamiento];

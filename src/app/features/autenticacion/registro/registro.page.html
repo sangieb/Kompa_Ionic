@@ -98,8 +98,9 @@
       }
     </ion-select>
 
-    <!-- Género -->
-    <h2 class="etiqueta">Género</h2>
+    <!-- Género (opcional) -->
+    <h2 class="etiqueta">Género <span class="opcional">(opcional)</span></h2>
+    <p class="ayuda-campo kompa-texto-gris">Puedes elegir “Prefiero no decirlo”. Kompa funciona igual sin este dato.</p>
     <ion-radio-group formControlName="genero">
       @for (g of generos; track g) {
       <ion-radio class="radio" [value]="g" labelPlacement="end" justify="start">{{ g }}</ion-radio>
@@ -127,16 +128,43 @@
       }
     </div>
 
+    <!-- Consentimiento informado (Ley 1581 de 2012) -->
+    <section class="consentimiento" aria-labelledby="titulo-consentimiento">
+      <h2 id="titulo-consentimiento" class="titulo-consentimiento">
+        <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+        Antes de continuar
+      </h2>
+      <p class="texto-consentimiento">
+        Para crear tu cuenta necesitamos tu aceptación expresa. Puedes leer los documentos completos antes de decidir.
+      </p>
+
+      <button type="button" class="enlace-documento" (click)="abrirTerminos()">
+        Leer Términos y Condiciones y autorización de datos
+      </button>
+
+      <ion-checkbox class="acepto" labelPlacement="end" justify="start" formControlName="aceptaTerminos">
+        He leído y acepto los Términos y Condiciones de uso de Kompa.
+      </ion-checkbox>
+
+      <ion-checkbox class="acepto" labelPlacement="end" justify="start" formControlName="aceptaDatos">
+        Autorizo de forma previa, expresa e informada el tratamiento de mis datos personales conforme a la Ley 1581 de
+        2012 y al Decreto 1377 de 2013.
+      </ion-checkbox>
+
+      <p class="nota-consentimiento kompa-texto-gris">
+        El género es un dato opcional. Si decides informarlo, autorizas su uso únicamente para mostrarlo en tu perfil.
+        Puedes revocar tu consentimiento o eliminar tus datos desde Mi perfil.
+      </p>
+    </section>
+
     <ion-button expand="block" class="kompa-boton boton-crear" [disabled]="cargando()" (click)="crearCuenta()">
       Crear cuenta
     </ion-button>
 
-    <ion-checkbox class="acepto" labelPlacement="end" justify="start" formControlName="aceptaDatos">
-      Acepto el tratamiento de mis datos personales conforme a la Política de Privacidad
-    </ion-checkbox>
-
     <p class="terminos kompa-texto-gris">
-      Al registrarte aceptas nuestros Términos y Condiciones y Política de Privacidad
+      Responsable del tratamiento: Kompa — Universidad Surcolombiana · facingenieria@usco.edu.co
     </p>
   </div>
+
+  <app-terminos-modal [abierto]="modalTerminosAbierto()" (cerrado)="cerrarTerminos()" />
 </ion-content>
