@@ -50,7 +50,7 @@ SEED_CATALOGS.intereses = SEED_CATALOGS.interests;
 export const CATALOGOS_SEMILLA = SEED_CATALOGS;
 
 /** Gender options during registration (optional field). */
-export const GENDERS = ['Mujer', 'Hombre', 'No binario', 'Prefiero describirlo', 'Prefiero no decirlo'] as const;
+export const GENDERS = ['Mujer', 'Hombre', 'No binario', 'Prefiero no decirlo'] as const;
 export const GENEROS = GENDERS;
 
 /** Connection options during registration. */
