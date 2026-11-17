@@ -3,8 +3,8 @@
 
   <span slot="fixed" class="titulo">Kompa</span>
 
-  <ion-button slot="fixed" class="boton-perfil" aria-label="Mi perfil" (click)="irAPerfil()">
-    <ion-icon slot="icon-only" name="person"></ion-icon>
+  <ion-button slot="fixed" class="boton-salir" aria-label="Cerrar sesión" (click)="confirmarCierreSesion()">
+    <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
   </ion-button>
 
   @if (mostrarAviso()) {

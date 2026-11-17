@@ -9,19 +9,25 @@
   <ion-toolbar class="toolbar-blanca">
     <ion-searchbar placeholder="Buscar por nombre, lugar u origen…" [debounce]="0" (ionInput)="alBuscar($event)">
     </ion-searchbar>
+  </ion-toolbar>
 
-    <div class="chips">
-      @for (o of opcionesOrigen; track o.etiqueta) {
-      <ion-chip [class.seleccionado]="o === origenSeleccionado" (click)="elegirOrigen(o)"> {{ o.etiqueta }} </ion-chip>
-      }
-    </div>
+  <ion-toolbar class="toolbar-blanca">
+    <div class="filtros">
+      <div class="chips">
+        @for (o of opcionesOrigen; track o.etiqueta) {
+        <ion-chip [class.seleccionado]="o === origenSeleccionado" (click)="elegirOrigen(o)">
+          {{ o.etiqueta }}
+        </ion-chip>
+        }
+      </div>
 
-    <div class="chips">
-      @for (d of opcionesDuracion; track d.etiqueta) {
-      <ion-chip [class.seleccionado]="d === duracionSeleccionada" (click)="elegirDuracion(d)">
-        {{ d.etiqueta }}
-      </ion-chip>
-      }
+      <div class="chips">
+        @for (d of opcionesDuracion; track d.etiqueta) {
+        <ion-chip [class.seleccionado]="d === duracionSeleccionada" (click)="elegirDuracion(d)">
+          {{ d.etiqueta }}
+        </ion-chip>
+        }
+      </div>
     </div>
   </ion-toolbar>
 </ion-header>

@@ -8,7 +8,7 @@ $abajo: calc(var(--ion-safe-area-bottom, 0px) + 80px);
 
 // Todo lo que flota sobre el mapa va por encima de Leaflet (z-index 1000)
 .titulo,
-.boton-perfil,
+.boton-salir,
 .zona-aviso,
 .fabs {
   position: absolute;
@@ -28,17 +28,17 @@ $abajo: calc(var(--ion-safe-area-bottom, 0px) + 80px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
-// Botón del perfil: blanco, arriba a la derecha (era btn_logout)
-.boton-perfil {
+// Botón de cerrar sesión: blanco, arriba a la derecha (era btn_logout)
+.boton-salir {
   top: $arriba;
   right: 16px;
   margin: 0;
   --background: #ffffff;
-  --color: var(--ion-color-tertiary);
-  --border-radius: 20px;
-  --padding-start: 12px;
-  --padding-end: 12px;
-  font-size: 18px;
+  --color: var(--ion-color-primary);
+  --border-radius: 50%;
+  --padding-start: 10px;
+  --padding-end: 10px;
+  font-size: 20px;
 }
 
 // Aviso de permiso: debajo del título, sin tapar los FAB ni la barra inferior

@@ -4,19 +4,27 @@
 }
 
 ion-searchbar {
-  padding: 0 8px;
+  padding: 8px 12px 4px;
   --border-radius: 24px;
 }
 
 /* ---- Chips de filtros (selección única) ---- */
+.filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px 12px;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;
-  padding: 0 8px;
+  gap: 8px;
+  margin: 0;
 }
 
 ion-chip {
-  margin: 0 8px 8px 0;
+  margin: 0;
   border: 1px solid var(--ion-color-secondary);
   --background: var(--kompa-purple-ultra-light);
   --color: #2b2b2b;

@@ -2,6 +2,8 @@ import type { ElementRef, OnDestroy } from '@angular/core';
 import { Component, ViewChild, computed, inject, signal } from '@angular/core';
 import type { ValidatorFn } from '@angular/forms';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { App } from '@capacitor/app';
+import type { PluginListenerHandle } from '@capacitor/core';
 import {
   IonBackButton,
   IonButton,
@@ -109,12 +111,16 @@ export class NuevaActividadPage implements OnDestroy {
   readonly mostrarAvisoUbicacion = computed(
     () =>
       !this.avisoUbicacionDescartado() &&
-      (this.estadoUbicacion() === 'denied' || this.estadoUbicacion() === 'unavailable'),
+      (this.estadoUbicacion() === 'denied' ||
+        this.estadoUbicacion() === 'servicios-apagados' ||
+        this.estadoUbicacion() === 'unavailable'),
   );
 
   private posicionDispositivo: Coordenada | null = null;
   private mapa?: L.Map;
   private marcador?: L.Marker;
+  private reanudacion?: PluginListenerHandle;
+  private revisando = false;
 
   private readonly actividades = inject(ActividadService);
   private readonly geo = inject(GeocodificacionService);
@@ -138,9 +144,11 @@ export class NuevaActividadPage implements OnDestroy {
       await this.actualizarEstadoUbicacion(true);
     }
     this.mapa.invalidateSize();
+    await this.escucharReanudacion();
   }
 
   ngOnDestroy(): void {
+    void this.reanudacion?.remove();
     this.mapa?.remove();
   }
 
@@ -185,15 +193,23 @@ export class NuevaActividadPage implements OnDestroy {
   }
 
   alAccionAvisoUbicacion(): void {
-    if (this.estadoUbicacion() === 'denied') {
+    const estado = this.estadoUbicacion();
+    if (estado === 'denied') {
       void this.permisos.abrirAjustesApp();
+      return;
+    }
+    if (estado === 'servicios-apagados') {
+      void this.permisos.abrirAjustesUbicacion();
       return;
     }
     void this.usarMiUbicacion();
   }
 
   get accionAvisoUbicacion(): string {
-    return this.estadoUbicacion() === 'denied' ? 'Abrir ajustes' : 'Reintentar';
+    const estado = this.estadoUbicacion();
+    if (estado === 'denied') return 'Abrir ajustes';
+    if (estado === 'servicios-apagados') return 'Ajustes de ubicación';
+    return 'Reintentar';
   }
 
   descartarAvisoUbicacion(): void {
@@ -226,8 +242,50 @@ export class NuevaActividadPage implements OnDestroy {
       return;
     }
 
+    if (resultado.estado === 'servicios-apagados') {
+      this.estadoUbicacion.set('servicios-apagados');
+      this.avisoUbicacionDescartado.set(false);
+      if (avisar) {
+        await this.mensajes.mostrar('Activa la ubicación del teléfono o toca el mapa para fijar la actividad.');
+      }
+      return;
+    }
+
     if (avisar) {
-      await this.mensajes.mostrar('No pudimos obtener tu ubicación. Revisa el GPS o toca el mapa para fijarla.');
+      const mensaje =
+        resultado.motivo === 'tiempo'
+          ? 'La búsqueda de ubicación tardó demasiado. Toca el mapa para fijarla.'
+          : resultado.motivo === 'precision'
+            ? 'No obtuvimos una ubicación precisa. Toca el mapa para fijarla.'
+            : 'No pudimos obtener tu ubicación. Revisa el GPS o toca el mapa para fijarla.';
+      await this.mensajes.mostrar(mensaje);
+    }
+  }
+
+  private async escucharReanudacion(): Promise<void> {
+    if (this.reanudacion) return;
+    try {
+      this.reanudacion = await App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) void this.revisarAlVolver();
+      });
+    } catch (error) {
+      console.warn('No se pudo escuchar la reanudación de la app', error);
+    }
+  }
+
+  /** Revalida permisos al volver de Ajustes sin abrir diálogos. */
+  private async revisarAlVolver(): Promise<void> {
+    if (this.revisando) return;
+    this.revisando = true;
+    try {
+      const anterior = this.estadoUbicacion();
+      const estado = await this.permisos.estadoUbicacion();
+      this.estadoUbicacion.set(estado);
+      if (estado !== 'granted' || anterior === 'granted') return;
+      this.avisoUbicacionDescartado.set(false);
+      await this.aplicarUbicacion(await this.ubicacion.obtenerPosicion(), false);
+    } finally {
+      this.revisando = false;
     }
   }
 

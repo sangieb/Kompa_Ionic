@@ -23,7 +23,7 @@ interface Pestana {
 export class BarraInferiorComponent {
   readonly pestanas: Pestana[] = [
     { ruta: '/home', etiqueta: 'Mapa', icono: 'map-outline' },
-    { ruta: '/lista', etiqueta: 'Lista', icono: 'list-outline' },
+    { ruta: '/lista', etiqueta: 'Actividades', icono: 'list-outline' },
     { ruta: '/feed', etiqueta: 'Feed', icono: 'chatbubbles-outline' },
     { ruta: '/perfil', etiqueta: 'Perfil', icono: 'person-outline' },
   ];

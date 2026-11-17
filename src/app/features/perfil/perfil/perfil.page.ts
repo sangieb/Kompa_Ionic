@@ -1,5 +1,8 @@
+import type { OnDestroy } from '@angular/core';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { App } from '@capacitor/app';
+import type { PluginListenerHandle } from '@capacitor/core';
 import {
   AlertController,
   IonBackButton,
@@ -56,13 +59,16 @@ import { comprimirFoto } from '../../../shared/utils/foto';
     TerminosModalComponent,
   ],
 })
-export class PerfilPage {
+export class PerfilPage implements OnDestroy {
   readonly cargando = signal(true);
   readonly perfil = signal<Perfil | null>(null);
   readonly consentimiento = signal<Consentimiento | null>(null);
   readonly estadoUbicacion = signal<EstadoPermisoUi>('prompt');
   readonly estadoCamara = signal<EstadoPermisoUi>('prompt');
   readonly modalTerminosAbierto = signal(false);
+
+  private reanudacion?: PluginListenerHandle;
+  private revisandoPermisos = false;
 
   private readonly perfilService = inject(PerfilService);
   private readonly auth = inject(AuthService);
@@ -82,6 +88,16 @@ export class PerfilPage {
 
   async ionViewWillEnter(): Promise<void> {
     await this.cargar();
+    await this.escucharReanudacion();
+  }
+
+  ionViewWillLeave(): void {
+    void this.reanudacion?.remove();
+    this.reanudacion = undefined;
+  }
+
+  ngOnDestroy(): void {
+    void this.reanudacion?.remove();
   }
 
   get consentimientoTexto(): string {
@@ -100,7 +116,8 @@ export class PerfilPage {
   }
 
   get accionUbicacion(): string {
-    return this.estadoUbicacion() === 'denied' ? 'Ajustes' : 'Activar';
+    const estado = this.estadoUbicacion();
+    return estado === 'denied' || estado === 'servicios-apagados' ? 'Ajustes' : 'Activar';
   }
 
   get accionCamara(): string {
@@ -120,16 +137,21 @@ export class PerfilPage {
   }
 
   async gestionarUbicacion(): Promise<void> {
-    if (this.estadoUbicacion() === 'granted') {
+    const estado = this.estadoUbicacion();
+    if (estado === 'granted') {
       await this.mensajes.mostrar('La ubicación ya está activa.');
       return;
     }
-    if (this.estadoUbicacion() === 'denied') {
+    if (estado === 'servicios-apagados') {
+      await this.permisos.abrirAjustesUbicacion();
+      return;
+    }
+    if (estado === 'denied') {
       await this.permisos.abrirAjustesApp();
       return;
     }
     const concedido = await this.permisos.solicitarUbicacion();
-    this.estadoUbicacion.set(concedido ? 'granted' : 'denied');
+    this.estadoUbicacion.set(concedido ? 'granted' : await this.permisos.estadoUbicacion());
     if (!concedido) await this.permisos.abrirAjustesApp();
   }
 
@@ -207,6 +229,30 @@ export class PerfilPage {
     await this.mensajes.mostrar('Foto de perfil actualizada');
   }
 
+  private async escucharReanudacion(): Promise<void> {
+    if (this.reanudacion) return;
+    try {
+      this.reanudacion = await App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) void this.revalidarPermisos();
+      });
+    } catch (error) {
+      console.warn('No se pudo escuchar la reanudación de la app', error);
+    }
+  }
+
+  /** Al volver de Ajustes se refrescan los permisos sin abrir diálogos. */
+  private async revalidarPermisos(): Promise<void> {
+    if (this.revisandoPermisos) return;
+    this.revisandoPermisos = true;
+    try {
+      const [ubicacion, camara] = await Promise.all([this.permisos.estadoUbicacion(), this.permisos.estadoCamara()]);
+      this.estadoUbicacion.set(ubicacion);
+      this.estadoCamara.set(camara);
+    } finally {
+      this.revisandoPermisos = false;
+    }
+  }
+
   private async cargar(): Promise<void> {
     const [perfil, consentimiento, estadoUbicacion, estadoCamara] = await Promise.all([
       this.perfilService.perfilActual(),
@@ -239,6 +285,8 @@ export class PerfilPage {
         return 'Activa';
       case 'denied':
         return 'Desactivada';
+      case 'servicios-apagados':
+        return 'Ubicación del teléfono apagada';
       case 'unavailable':
         return 'No disponible';
       default:

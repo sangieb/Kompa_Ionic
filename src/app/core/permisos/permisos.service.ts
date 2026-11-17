@@ -1,18 +1,20 @@
 import { Injectable, inject } from '@angular/core';
 import { Camera } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
+import type { PermissionStatus } from '@capacitor/geolocation';
 import { Geolocation } from '@capacitor/geolocation';
 import { AndroidSettings, IOSSettings, NativeSettings } from 'capacitor-native-settings';
 
 import { MensajeService } from '../mensaje/mensaje.service';
-import { AlmacenamientoService } from '../storage/almacenamiento.service';
-import { ClavesAlmacenamiento } from '../storage/claves';
 
 /** Estado de un permiso nativo, igual que PermissionState de Capacitor. */
 export type EstadoPermiso = 'granted' | 'granted-always' | 'limited' | 'denied' | 'prompt' | 'prompt-with-rationale';
 
 /** Estado simplificado que consumen las pantallas. */
-export type EstadoPermisoUi = 'granted' | 'prompt' | 'denied' | 'unavailable';
+export type EstadoPermisoUi = 'granted' | 'prompt' | 'denied' | 'servicios-apagados' | 'unavailable';
+
+/** Código del plugin cuando la ubicación del sistema está apagada. */
+const CODIGO_SERVICIOS_APAGADOS = 'OS-PLUG-GLOC-0007';
 
 export function permisoConcedido(estado: EstadoPermiso | null | undefined): boolean {
   // 'limited' es el acceso parcial a fotos de Android 14+: alcanza para elegir.
@@ -29,7 +31,6 @@ export function permisoConcedido(estado: EstadoPermiso | null | undefined): bool
 @Injectable({ providedIn: 'root' })
 export class PermisosService {
   private readonly mensajes = inject(MensajeService);
-  private readonly almacenamiento = inject(AlmacenamientoService);
 
   async solicitarCamara(): Promise<boolean> {
     const estado = await this.pedir(async () => {
@@ -49,25 +50,37 @@ export class PermisosService {
     return permisoConcedido(estado);
   }
 
-  /** Pide el permiso de ubicación (diálogo del sistema si hace falta). */
+  /**
+   * Pide el permiso de ubicación (diálogo del sistema si hace falta).
+   * En Android 12+ alcanza con la ubicación aproximada, así que se acepta
+   * `coarseLocation`: el mapa y las actividades cercanas siguen funcionando.
+   */
   async solicitarUbicacion(): Promise<boolean> {
-    const estado = await this.pedir(async () => {
-      return (await Geolocation.requestPermissions()).location;
-    });
-    if (Capacitor.isNativePlatform()) {
-      await this.almacenamiento.guardar(ClavesAlmacenamiento.ubicacionSolicitada, true);
+    if (!Capacitor.isNativePlatform()) return true;
+    try {
+      const estado = await Geolocation.checkPermissions();
+      if (permisoConcedido(estado.location) || permisoConcedido(estado.coarseLocation)) return true;
+      if (estado.location === 'denied' && estado.coarseLocation === 'denied') return false;
+
+      const pedido = await Geolocation.requestPermissions();
+      return permisoConcedido(pedido.location) || permisoConcedido(pedido.coarseLocation);
+    } catch (error) {
+      console.warn('No se pudo solicitar el permiso de ubicación', error);
+      return false;
     }
-    return permisoConcedido(estado);
   }
 
-  /** Consulta la ubicación sin abrir el diálogo del sistema. */
+  /**
+   * Consulta la ubicación sin abrir el diálogo del sistema. Distingue los
+   * servicios de ubicación apagados de un permiso que no se pudo consultar.
+   */
   async estadoUbicacion(): Promise<EstadoPermisoUi> {
     if (!Capacitor.isNativePlatform()) return this.estadoUbicacionWeb();
     try {
-      return simplificar((await Geolocation.checkPermissions()).location);
+      return simplificarUbicacion(await Geolocation.checkPermissions());
     } catch (error) {
       console.warn('No se pudo verificar el permiso de ubicación', error);
-      return 'unavailable';
+      return esServiciosApagados(error) ? 'servicios-apagados' : 'unavailable';
     }
   }
 
@@ -80,11 +93,6 @@ export class PermisosService {
       console.warn('No se pudo verificar el permiso de cámara', error);
       return 'unavailable';
     }
-  }
-
-  /** Verifica la ubicación sin abrir el diálogo del sistema. */
-  async verificarUbicacion(): Promise<boolean> {
-    return (await this.estadoUbicacion()) === 'granted';
   }
 
   /** Abre los ajustes de la app para cambiar permisos (nativo). */
@@ -158,6 +166,21 @@ export class PermisosService {
       return 'prompt';
     }
   }
+}
+
+/** Los servicios apagados llegan como error al consultar el permiso. */
+function esServiciosApagados(error: unknown): boolean {
+  return (error as { code?: unknown })?.code === CODIGO_SERVICIOS_APAGADOS;
+}
+
+/**
+ * La ubicación aproximada es suficiente para Kompa, así que cualquiera de los
+ * dos alias concedidos cuenta como permiso activo.
+ */
+function simplificarUbicacion(estado: PermissionStatus): EstadoPermisoUi {
+  if (permisoConcedido(estado.location) || permisoConcedido(estado.coarseLocation)) return 'granted';
+  if (estado.location === 'denied' || estado.coarseLocation === 'denied') return 'denied';
+  return 'prompt';
 }
 
 function simplificar(estado: EstadoPermiso): EstadoPermisoUi {
