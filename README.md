@@ -421,4 +421,5 @@ Kompa cumple la Ley 1581 de 2012 de protección de datos personales de Colombia:
 
 ---
 
-Universidad Surcolombiana · Facultad de Ingeniería · Neiva, Huila
+## Link de descarga APK
+https://drive.google.com/file/d/1xQqOddUJGmsCZRQ-OezfkN1y-jK_tAcX/view?usp=sharing
