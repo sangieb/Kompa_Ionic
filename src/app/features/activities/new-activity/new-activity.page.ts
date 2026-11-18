@@ -411,7 +411,9 @@ export class NewActivityPage implements OnDestroy {
       const photoPath = photo ? await compressPhoto(photo) : null;
       const profile = await this.profileService.getCurrentProfile();
       const date = new Date(data.fechaTexto).getTime();
-      const duration = data.duracionTexto.trim() ? Number(data.duracionTexto.trim()) : null;
+      // ion-input type="number" hands the form a number (or null), not a string.
+      const durationText = String(data.duracionTexto ?? '').trim();
+      const duration = durationText ? Number(durationText) : null;
 
       await this.activityService.saveNew({
         id: crypto.randomUUID(),
@@ -430,6 +432,9 @@ export class NewActivityPage implements OnDestroy {
 
       await this.messageService.show('Actividad guardada');
       this.navCtrl.back();
+    } catch (err) {
+      console.error('Could not save activity', err);
+      await this.messageService.show('No se pudo guardar la actividad. Inténtalo de nuevo.');
     } finally {
       this.saving.set(false);
     }
