@@ -1,0 +1,58 @@
+import type { Post } from '../features/feed/models/post.model';
+
+export const SAMPLE_POSTS: Post[] = [
+  {
+    id: 'pub_ejemplo_monserrate',
+    title: '¿Alguien para subir a Monserrate el sábado?',
+    body: 'Pienso salir a las 7 a. m. desde la estación del funicular. Somos dos y buscamos más compañía.',
+    author: 'Laura M.',
+    createdAt: 1736208000000,
+    lat: 4.6058,
+    lon: -74.0562,
+    titulo: '¿Alguien para subir a Monserrate el sábado?',
+    cuerpo: 'Pienso salir a las 7 a. m. desde la estación del funicular. Somos dos y buscamos más compañía.',
+    autor: 'Laura M.',
+    fechaCreacion: 1736208000000,
+  },
+  {
+    id: 'pub_ejemplo_museo_oro',
+    title: 'Tip para el Museo del Oro',
+    body: 'Vayan con calma: el recorrido completo toma unas dos horas. La sala de ofrendas es la mejor parte.',
+    author: 'Andrés P.',
+    createdAt: 1736294400000,
+    lat: 4.6018,
+    lon: -74.072,
+    titulo: 'Tip para el Museo del Oro',
+    cuerpo: 'Vayan con calma: el recorrido completo toma unas dos horas. La sala de ofrendas es la mejor parte.',
+    autor: 'Andrés P.',
+    fechaCreacion: 1736294400000,
+  },
+  {
+    id: 'pub_ejemplo_usaquen',
+    title: 'Busco grupo para el Mercado de Usaquén',
+    body: 'Me interesa ir el domingo a ver artesanías y probar comida. ¿Alguien se apunta?',
+    author: 'Camila R.',
+    createdAt: 1736380800000,
+    lat: 4.6978,
+    lon: -74.0441,
+    titulo: 'Busco grupo para el Mercado de Usaquén',
+    cuerpo: 'Me interesa ir el domingo a ver artesanías y probar comida. ¿Alguien se apunta?',
+    autor: 'Camila R.',
+    fechaCreacion: 1736380800000,
+  },
+  {
+    id: 'pub_ejemplo_botanico',
+    title: 'Recomendación: Jardín Botánico entre semana',
+    body: 'Entre semana hay menos gente y se disfrutan mejor los invernaderos. Lleven chaqueta.',
+    author: 'Sofía G.',
+    createdAt: 1736467200000,
+    lat: 4.6715,
+    lon: -74.0964,
+    titulo: 'Recomendación: Jardín Botánico entre semana',
+    cuerpo: 'Entre semana hay menos gente y se disfrutan mejor los invernaderos. Lleven chaqueta.',
+    autor: 'Sofía G.',
+    fechaCreacion: 1736467200000,
+  },
+];
+
+export const PUBLICACIONES_EJEMPLO = SAMPLE_POSTS;

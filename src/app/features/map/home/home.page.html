@@ -1,0 +1,36 @@
+<ion-content [fullscreen]="true" [scrollY]="false">
+  <div #mapa class="mapa"></div>
+
+  <span slot="fixed" class="titulo">Kompa</span>
+
+  <ion-button slot="fixed" class="boton-salir" aria-label="Cerrar sesión" (click)="confirmarCierreSesion()">
+    <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+  </ion-button>
+
+  @if (mostrarAviso()) {
+  <div slot="fixed" class="zona-aviso">
+    <app-permission-notice
+      [titulo]="tituloAviso()"
+      [mensaje]="mensajeAviso()"
+      [icono]="iconoAviso()"
+      [accionTexto]="accionAviso()"
+      [accionSecundariaTexto]="secundariaAviso()"
+      [cargando]="solicitandoUbicacion()"
+      (accion)="alAccionAviso()"
+      (secundaria)="alAccionSecundaria()"
+      (cerrar)="descartarAviso()"
+    />
+  </div>
+  }
+
+  <div slot="fixed" class="fabs">
+    <button type="button" class="fab fab-centrar" aria-label="Centrar mapa" (click)="centrarEnMiUbicacion()">
+      <ion-icon name="locate"></ion-icon>
+    </button>
+    <button type="button" class="fab fab-agregar" aria-label="Agregar actividad" (click)="irANuevaActividad()">
+      <ion-icon name="add"></ion-icon>
+    </button>
+  </div>
+
+  <app-bottom-bar slot="fixed"></app-bottom-bar>
+</ion-content>

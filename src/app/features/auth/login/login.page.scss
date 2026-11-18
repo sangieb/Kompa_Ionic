@@ -1,0 +1,37 @@
+.formulario {
+  padding: 48px 24px 40px;
+}
+
+.titulo {
+  margin: 0;
+  color: var(--ion-color-tertiary); // purple_dark
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.subtitulo {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.campo {
+  margin-top: 16px;
+  --highlight-color-focused: var(--ion-color-primary);
+}
+
+.primer-campo {
+  margin-top: 32px;
+}
+
+.boton-login {
+  margin-top: 32px;
+}
+
+.link-olvide {
+  display: block;
+  margin: 16px auto 0;
+  background: none;
+  border: none;
+  color: var(--ion-color-primary);
+  font-size: 14px;
+}

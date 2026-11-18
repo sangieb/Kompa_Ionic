@@ -1,0 +1,121 @@
+<section class="perfil">
+  <div class="portada">
+    <div class="brillo" aria-hidden="true"></div>
+
+    <button
+      type="button"
+      class="foto"
+      [class.editable]="editable"
+      [disabled]="!editable"
+      [attr.aria-label]="editable ? 'Cambiar foto de perfil' : 'Foto de perfil'"
+      (click)="editarFoto.emit()"
+    >
+      @if (perfil.photoUri) {
+        <img [src]="perfil.photoUri" alt="Foto de perfil" />
+      } @else {
+        <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+      }
+      @if (editable) {
+        <span class="badge-camera">
+          <ion-icon name="camera" aria-hidden="true"></ion-icon>
+        </span>
+      }
+    </button>
+
+    <h1 class="nombre">{{ perfil.name || 'Tu perfil' }}</h1>
+    <p class="correo">{{ perfil.email }}</p>
+
+    <div class="badges">
+      @if (perfil.nacionalidad) {
+        <span class="badge">
+          <ion-icon name="flag-outline" aria-hidden="true"></ion-icon>
+          {{ perfil.nationality }}
+        </span>
+      }
+      @if (edad !== null) {
+        <span class="badge">
+          <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
+          {{ edad }} años
+        </span>
+      }
+    </div>
+  </div>
+
+  <div class="estadisticas" aria-label="Resumen del perfil">
+    <div class="dato">
+      <strong>{{ idiomas }}</strong>
+      <span>Idiomas</span>
+    </div>
+    <div class="separador" aria-hidden="true"></div>
+    <div class="dato">
+      <strong>{{ intereses }}</strong>
+      <span>Intereses</span>
+    </div>
+    <div class="separador" aria-hidden="true"></div>
+    <div class="dato">
+      <strong>{{ perfil.connectWith.length }}</strong>
+      <span>Conexiones</span>
+    </div>
+  </div>
+
+  <section class="tarjeta sobre-ti" aria-labelledby="titulo-sobre-ti">
+    <h2 id="titulo-sobre-ti" class="titulo-seccion">Sobre ti</h2>
+
+    <div class="fila">
+      <span class="icono"><ion-icon name="calendar-outline" aria-hidden="true"></ion-icon></span>
+      <span class="etiqueta">Nacimiento</span>
+      <span class="valor">{{ nacimiento || 'No indicado' }}</span>
+    </div>
+    <div class="fila">
+      <span class="icono"><ion-icon name="flag-outline" aria-hidden="true"></ion-icon></span>
+      <span class="etiqueta">Nacionalidad</span>
+      <span class="valor">{{ perfil.nationality || 'No indicada' }}</span>
+    </div>
+    @if (perfil.gender) {
+      <div class="fila">
+        <span class="icono"><ion-icon name="person-outline" aria-hidden="true"></ion-icon></span>
+        <span class="etiqueta">Género</span>
+        <span class="valor">{{ perfil.gender }}</span>
+      </div>
+    }
+    @if (perfil.connectWith.length) {
+      <div class="fila">
+        <span class="icono"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span>
+        <span class="etiqueta">Conectar con</span>
+        <span class="valor">{{ conectar }}</span>
+      </div>
+    }
+  </section>
+
+  <section class="seccion" aria-labelledby="titulo-idiomas">
+    <h2 id="titulo-idiomas" class="titulo-seccion">
+      <ion-icon name="language-outline" aria-hidden="true"></ion-icon>
+      Idiomas
+    </h2>
+    @if (perfil.languages.length) {
+      <div class="chips">
+        @for (idioma of perfil.languages; track idioma) {
+          <ion-chip>{{ idioma }}</ion-chip>
+        }
+      </div>
+    } @else {
+      <p class="vacio">Todavía no indicaste tus idiomas.</p>
+    }
+  </section>
+
+  <section class="seccion" aria-labelledby="titulo-intereses">
+    <h2 id="titulo-intereses" class="titulo-seccion">
+      <ion-icon name="heart-outline" aria-hidden="true"></ion-icon>
+      Intereses
+    </h2>
+    @if (perfil.interests.length) {
+      <div class="chips">
+        @for (interes of perfil.interests; track interes) {
+          <ion-chip>{{ interes }}</ion-chip>
+        }
+      </div>
+    } @else {
+      <p class="vacio">Elige algunos intereses para encontrar mejores planes.</p>
+    }
+  </section>
+</section>

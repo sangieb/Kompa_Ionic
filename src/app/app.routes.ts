@@ -1,49 +1,65 @@
 import type { Routes } from '@angular/router';
 
+import { authGuard } from './core/auth/auth.guard';
+
 export const routes: Routes = [
   {
-    path: 'home',
-    loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
-  },
-  {
     path: '',
-    redirectTo: 'inicio',
+    redirectTo: 'welcome',
     pathMatch: 'full',
   },
   {
-    path: 'inicio',
-    loadComponent: () => import('./pages/inicio/inicio.page').then((m) => m.InicioPage),
+    path: 'welcome',
+    loadComponent: () => import('./features/auth/welcome/welcome.page').then((m) => m.WelcomePage),
   },
   {
     path: 'login',
-    loadComponent: () => import('./pages/login/login.page').then((m) => m.LoginPage),
+    loadComponent: () => import('./features/auth/login/login.page').then((m) => m.LoginPage),
   },
   {
-    path: 'recuperar',
-    loadComponent: () => import('./pages/recuperar/recuperar.page').then((m) => m.RecuperarPage),
+    path: 'recover',
+    loadComponent: () => import('./features/auth/recover/recover.page').then((m) => m.RecoverPage),
   },
   {
-    path: 'registro',
-    loadComponent: () => import('./pages/registro/registro.page').then((m) => m.RegistroPage),
+    path: 'register',
+    loadComponent: () => import('./features/auth/register/register.page').then((m) => m.RegisterPage),
   },
   {
-    path: 'perfil-preview',
-    loadComponent: () => import('./pages/perfil-preview/perfil-preview.page').then((m) => m.PerfilPreviewPage),
+    path: 'profile-preview',
+    loadComponent: () =>
+      import('./features/auth/profile-preview/profile-preview.page').then((m) => m.ProfilePreviewPage),
   },
   {
-    path: 'confirmacion',
-    loadComponent: () => import('./pages/confirmacion/confirmacion.page').then((m) => m.ConfirmacionPage),
+    path: 'confirmation',
+    loadComponent: () => import('./features/auth/confirmation/confirmation.page').then((m) => m.ConfirmationPage),
   },
   {
-    path: 'lista',
-    loadComponent: () => import('./pages/lista/lista.page').then((m) => m.ListaPage),
+    path: 'home',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/map/home/home.page').then((m) => m.HomePage),
+  },
+  {
+    path: 'activities',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/activities/list/list.page').then((m) => m.ListPage),
+  },
+  {
+    path: 'new-activity',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/activities/new-activity/new-activity.page').then((m) => m.NewActivityPage),
   },
   {
     path: 'feed',
-    loadComponent: () => import('./pages/feed/feed.page').then((m) => m.FeedPage),
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/feed/feed/feed.page').then((m) => m.FeedPage),
   },
   {
-    path: 'nueva-actividad',
-    loadComponent: () => import('./pages/nueva-actividad/nueva-actividad.page').then((m) => m.NuevaActividadPage),
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/profile/profile/profile.page').then((m) => m.ProfilePage),
+  },
+  {
+    path: '**',
+    redirectTo: 'welcome',
   },
 ];

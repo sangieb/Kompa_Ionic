@@ -1,0 +1,185 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="toolbar-blanca">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/inicio" text=""></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="formulario" [formGroup]="formulario">
+    <!-- Tarjeta 1: Encabezado, foto y datos personales -->
+    <ion-card class="kompa-card">
+      <ion-card-content>
+        <h1 class="titulo">Crea tu cuenta</h1>
+        <p class="subtitulo kompa-texto-gris">Encuentra a tu próximo grupo de viaje o amistad</p>
+
+        <!-- Foto de perfil -->
+        <div class="foto">
+          <button type="button" class="foto-circulo" aria-label="Foto de perfil" (click)="elegirFoto()">
+            @if (fotoUri()) {
+            <img [src]="fotoUri()" alt="Foto de perfil" />
+            } @else {
+            <ion-icon name="camera"></ion-icon>
+            }
+          </button>
+          <button type="button" class="foto-agregar" aria-label="Agregar foto" (click)="elegirFoto()">
+            <ion-icon name="add"></ion-icon>
+          </button>
+        </div>
+        <p class="ayuda-foto">Toca para tomar o elegir tu foto</p>
+
+        <!-- Datos -->
+        <ion-input
+          class="campo primer-campo"
+          fill="outline"
+          label="Nombre completo"
+          labelPlacement="floating"
+          autocomplete="name"
+          formControlName="nombre"
+        >
+        </ion-input>
+
+        <ion-input
+          class="campo"
+          fill="outline"
+          label="Correo electrónico"
+          labelPlacement="floating"
+          type="email"
+          inputmode="email"
+          autocomplete="email"
+          formControlName="correo"
+        >
+        </ion-input>
+
+        <ion-input
+          class="campo"
+          fill="outline"
+          label="Contraseña"
+          labelPlacement="floating"
+          type="password"
+          autocomplete="new-password"
+          formControlName="password"
+        >
+          <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+        </ion-input>
+
+        <ion-input
+          class="campo"
+          fill="outline"
+          label="Fecha de nacimiento"
+          labelPlacement="stacked"
+          type="date"
+          [max]="fechaMaxima"
+          formControlName="fechaNacimiento"
+        >
+        </ion-input>
+
+        <ion-select
+          class="campo"
+          fill="outline"
+          label="Nacionalidad"
+          labelPlacement="floating"
+          interface="popover"
+          formControlName="nacionalidad"
+        >
+          @for (n of catalogos().nacionalidades; track n) {
+          <ion-select-option [value]="n">{{ n }}</ion-select-option>
+          }
+        </ion-select>
+
+        <ion-select
+          class="campo"
+          fill="outline"
+          label="Idioma que hablas"
+          labelPlacement="floating"
+          interface="popover"
+          formControlName="idioma"
+        >
+          @for (i of catalogos().idiomas; track i) {
+          <ion-select-option [value]="i">{{ i }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Tarjeta 2: Preferencias e intereses -->
+    <ion-card class="kompa-card">
+      <ion-card-content>
+        <!-- Género (opcional) -->
+        <h2 class="etiqueta">Género <span class="opcional">(opcional)</span></h2>
+        <p class="ayuda-campo kompa-texto-gris">Puedes elegir “Prefiero no decirlo”. Kompa funciona igual sin este dato.</p>
+        <ion-radio-group formControlName="genero">
+          @for (g of generos; track g) {
+          <ion-radio class="radio" [value]="g" labelPlacement="end" justify="start">{{ g }}</ion-radio>
+          }
+        </ion-radio-group>
+
+        <!-- Con quién conectar -->
+        <h2 class="etiqueta">¿Con quién quieres conectar?</h2>
+        <div class="chips">
+          @for (o of opcionesConectar; track o) {
+          <ion-chip [class.seleccionado]="opcionesConectarElegidas.includes(o)" (click)="alternarConectar(o)">
+            {{ o }}
+          </ion-chip>
+          }
+        </div>
+
+        <!-- Intereses -->
+        <h2 class="etiqueta">Tus intereses</h2>
+        <p class="contador kompa-texto-gris">
+          Elige hasta {{ maxIntereses }} ({{ interesesElegidos.length }}/{{ maxIntereses }})
+        </p>
+        <div class="chips">
+          @for (i of catalogos().intereses; track i) {
+          <ion-chip [class.seleccionado]="interesesElegidos.includes(i)" (click)="alternarInteres(i)">{{ i }}</ion-chip>
+          }
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Tarjeta 3: Consentimiento y acción final -->
+    <ion-card class="kompa-card">
+      <ion-card-content>
+        <!-- Consentimiento informado (Ley 1581 de 2012) -->
+        <section class="consentimiento" aria-labelledby="titulo-consentimiento">
+          <h2 id="titulo-consentimiento" class="titulo-consentimiento">
+            <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+            Antes de continuar
+          </h2>
+          <p class="texto-consentimiento">
+            Para crear tu cuenta necesitamos tu aceptación expresa. Puedes leer los documentos completos antes de decidir.
+          </p>
+
+          <button type="button" class="enlace-documento" (click)="openTerms()">
+            Leer Términos y Condiciones y autorización de datos
+          </button>
+
+          <ion-checkbox class="acepto" labelPlacement="end" justify="start" formControlName="aceptaTerminos">
+            He leído y acepto los Términos y Condiciones de uso de Kompa.
+          </ion-checkbox>
+
+          <ion-checkbox class="acepto" labelPlacement="end" justify="start" formControlName="aceptaDatos">
+            Autorizo de forma previa, expresa e informada el tratamiento de mis datos personales conforme a la Ley 1581 de
+            2012 y al Decreto 1377 de 2013.
+          </ion-checkbox>
+
+          <p class="nota-consentimiento kompa-texto-gris">
+            El género es un dato opcional. Si decides informarlo, autorizas su uso únicamente para mostrarlo en tu perfil.
+            Puedes revocar tu consentimiento o eliminar tus datos desde Mi perfil.
+          </p>
+        </section>
+
+        <ion-button expand="block" class="kompa-boton boton-crear" [disabled]="cargando()" (click)="crearCuenta()">
+          Crear cuenta
+        </ion-button>
+
+        <p class="terminos kompa-texto-gris">
+          Responsable del tratamiento: Kompa — Universidad Surcolombiana · facingenieria@usco.edu.co
+        </p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <app-terms-modal [isOpen]="modalTerminosAbierto()" (dismiss)="closeTerms()" />
+</ion-content>

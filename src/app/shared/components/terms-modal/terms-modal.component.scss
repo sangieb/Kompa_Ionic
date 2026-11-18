@@ -1,0 +1,128 @@
+ion-modal.modal-terminos {
+  --width: min(720px, 100%);
+  --height: min(92vh, 920px);
+  --border-radius: 22px;
+}
+
+ion-modal.modal-terminos::part(content) {
+  border-radius: 22px;
+}
+
+.titulo-modal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ion-color-tertiary);
+  font-size: 18px;
+  font-weight: 700;
+
+  ion-icon {
+    font-size: 22px;
+    color: var(--ion-color-primary);
+  }
+}
+
+.texto-legal {
+  --padding-start: 20px;
+  --padding-end: 20px;
+  --padding-top: 16px;
+  --padding-bottom: 28px;
+  color: #2b2b2b;
+  font-size: 14px;
+  line-height: 1.55;
+
+  p {
+    margin: 0 0 12px;
+  }
+
+  ul {
+    margin: 0 0 14px;
+    padding-left: 20px;
+  }
+
+  li + li {
+    margin-top: 5px;
+  }
+
+  h2 {
+    margin: 24px 0 8px;
+    color: var(--ion-color-tertiary);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  strong {
+    color: #3d0b66;
+  }
+}
+
+.vigencia {
+  display: inline-block;
+  margin-bottom: 18px !important;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--kompa-purple-ultra-light);
+  color: var(--ion-color-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tabla-permisos {
+  margin: 10px 0 8px;
+  overflow: hidden;
+  border: 1px solid var(--kompa-borde);
+  border-radius: 14px;
+  font-size: 12px;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1.4fr;
+  gap: 8px;
+  padding: 9px 11px;
+  border-top: 1px solid var(--kompa-borde);
+
+  span:first-child {
+    font-weight: 700;
+    color: var(--ion-color-tertiary);
+  }
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  &.encabezado {
+    background: var(--kompa-purple-ultra-light);
+    font-weight: 700;
+  }
+}
+
+.nota {
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--kompa-purple-ultra-light);
+  color: var(--ion-color-tertiary);
+  font-size: 12px;
+}
+
+.pie-legal {
+  margin-top: 24px !important;
+  color: var(--kompa-gray-text);
+  font-size: 11px;
+  font-style: italic;
+}
+
+.pie-modal {
+  padding: 8px 16px calc(var(--ion-safe-area-bottom, 0px) + 8px);
+}
+
+@media (max-width: 480px) {
+  .fila {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .fila.encabezado {
+    display: none;
+  }
+}
